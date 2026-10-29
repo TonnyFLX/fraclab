@@ -1,0 +1,2633 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FracLab · Juego de fracciones</title>
+<style>
+:root{--ink:#1f2a44;--muted:#5d6b8a;--bg1:#eaf3ff;--bg2:#f6efff;--card:#fff;--primary:#5b4bdb;--primary-d:#4538b8;
+--teal:#14b8a6;--ok:#16a34a;--bad:#dc2626;--warn:#f59e0b;--line:#d9e1f2}
+*{box-sizing:border-box}
+html,body{margin:0;font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;color:var(--ink)}
+body{background:linear-gradient(135deg,var(--bg1),var(--bg2));min-height:100vh}
+#app{max-width:980px;margin:0 auto;padding:16px}
+#app.wide{max-width:1200px}
+h1,h2,h3{margin:.2em 0}
+.card{background:var(--card);border-radius:20px;box-shadow:0 6px 24px rgba(40,50,110,.12);padding:22px;margin:12px 0}
+.center{text-align:center;max-width:420px;margin:40px auto}
+.logo{font-size:44px;letter-spacing:-1px}.logo span{color:var(--primary)}
+.muted{color:var(--muted)}
+label{display:block;text-align:left;font-weight:600;margin:12px 0 4px}
+input[type=text],input[type=number],select{width:100%;font-size:20px;padding:10px 12px;border:2px solid var(--line);border-radius:12px;background:#fff;color:var(--ink)}
+input:focus,select:focus,button:focus-visible{outline:3px solid #b7aefc}
+.btn{font-size:18px;font-weight:700;border:0;border-radius:14px;padding:12px 20px;cursor:pointer;background:#eef1fb;color:var(--ink)}
+.btn:hover{filter:brightness(.96)}
+.btn.primary{background:var(--primary);color:#fff}.btn.primary:hover{background:var(--primary-d)}
+.btn.big{font-size:22px;padding:14px 26px;width:100%;margin-top:14px}
+.btn.ok{background:var(--ok);color:#fff}
+.btn.sm{font-size:15px;padding:8px 14px;border-radius:12px}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.link{background:none;border:0;color:var(--primary);font-size:16px;cursor:pointer;margin:10px 8px 0;text-decoration:underline}
+.err{color:var(--bad);min-height:1.4em;margin-top:8px;font-weight:600}
+.topbar{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.pill{background:#fff;border-radius:999px;padding:6px 14px;font-weight:700;box-shadow:0 2px 8px rgba(40,50,110,.1)}
+.bar{height:12px;background:#dfe6f7;border-radius:99px;overflow:hidden;margin:10px 0}
+.bar>i{display:block;height:100%;background:linear-gradient(90deg,var(--teal),var(--primary));width:0;transition:width .3s}
+.tbar{position:relative;height:24px;background:#dfe6f7;border-radius:99px;overflow:hidden;margin:6px 0 10px}
+.tbar i{position:absolute;left:0;top:0;bottom:0;width:100%;background:var(--teal)}
+.tbar i.low{background:var(--bad)}
+.tbar span{position:absolute;right:12px;top:0;font-size:14px;font-weight:800;line-height:24px}
+.modes{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.mode{border:3px solid var(--line);border-radius:18px;padding:16px;background:#fff;text-align:left;cursor:pointer;font:inherit;color:inherit}
+.mode:hover{border-color:var(--primary)}
+.mode .ic{font-size:34px}.mode b{display:block;font-size:20px;margin:4px 0}
+.mode.locked{opacity:.55;cursor:default;background:#f4f6fb}.mode.locked:hover{border-color:var(--line)}
+.levels{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+.lvl{border:3px solid var(--line);background:#fff;border-radius:12px;padding:8px 16px;font-weight:700;cursor:pointer;font-size:17px;color:var(--ink)}
+.lvl.on{border-color:var(--primary);background:#eeeaff;color:var(--primary-d)}
+.prompt{font-size:26px;font-weight:700;text-align:center;margin:4px 0 10px}
+.frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;line-height:1.05;font-weight:800;margin:0 .15em}
+.frac .n{padding:0 .3em;border-bottom:.09em solid currentColor}.frac .d{padding:0 .3em}
+.frac.xl{font-size:56px}.frac.lg{font-size:40px}
+.mixw{font-weight:800;vertical-align:middle;margin-right:.1em}
+.mixw.xl{font-size:84px}.mixw.lg{font-size:60px}
+.stage{display:flex;justify-content:center}
+canvas{width:100%;max-width:640px;aspect-ratio:2/1;background:#fbfcff;border:2px solid var(--line);border-radius:16px;touch-action:manipulation;cursor:pointer}
+canvas.cls{max-width:1100px}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-top:14px}
+.opt{font-size:30px;border:3px solid var(--line);background:#fff;border-radius:16px;padding:12px 8px;cursor:pointer;color:var(--ink);position:relative}
+.opt:hover{border-color:var(--primary)}
+.opt .k{position:absolute;left:8px;top:4px;font-size:12px;color:var(--muted);font-weight:700}
+.opt.right{background:#dcfce7;border-color:var(--ok)}.opt.wrong{background:#fee2e2;border-color:var(--bad)}
+.row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:14px}
+.row.left{justify-content:flex-start}
+.fb{margin-top:14px;padding:14px 16px;border-radius:14px;font-size:20px;text-align:center}
+.fb.good{background:#dcfce7;border:2px solid var(--ok)}.fb.bad{background:#fee2e2;border:2px solid var(--bad)}
+.hidden{display:none}
+.stars{font-size:52px;letter-spacing:6px}
+table{width:100%;border-collapse:collapse;font-size:15px}
+th,td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left}
+th{background:#f3f5fc;position:sticky;top:0}
+tr.st{cursor:pointer}tr.st:hover{background:#f7f5ff}
+.badge{display:inline-block;border-radius:8px;padding:2px 8px;margin:2px 4px 2px 0;font-size:13px;font-weight:700}
+.badge.high{background:#fee2e2;color:#991b1b}.badge.med{background:#fef3c7;color:#92400e}.badge.ok{background:#dcfce7;color:#166534}
+.scroll{overflow-x:auto}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media(max-width:640px){.grid2,.grid3{grid-template-columns:1fr}.prompt{font-size:21px}.frac.xl{font-size:44px}.mixw.xl{font-size:64px}}
+.pop{position:fixed;left:50%;bottom:8%;transform:translateX(-50%);background:var(--primary);color:#fff;padding:8px 18px;border-radius:99px;font-weight:800;font-size:22px;animation:pop .9s forwards;pointer-events:none}
+@keyframes pop{0%{opacity:0;transform:translate(-50%,10px)}20%{opacity:1}100%{opacity:0;transform:translate(-50%,-30px)}}
+.small{font-size:14px}
+/* modo clase */
+.shapes{display:flex;gap:8px;flex-wrap:wrap}
+.shp{border:3px solid var(--line);background:#fff;border-radius:14px;padding:8px 14px;font-weight:700;cursor:pointer;font-size:17px;color:var(--ink)}
+.shp.on{border-color:var(--primary);background:#eeeaff;color:var(--primary-d)}
+.ctl{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:12px}
+.ctl label{margin:0 0 4px;font-size:15px}
+.ctl input[type=number]{font-size:26px;font-weight:800;text-align:center}
+.ctl input:disabled{background:#f1f3f9;color:#9aa4bd}
+.who{min-height:26px;margin-top:8px;font-size:20px;font-weight:800;color:var(--ok)}
+.chk{display:inline-flex;align-items:center;gap:6px;font-size:16px;font-weight:600;margin:0;cursor:pointer}
+.chk input{width:20px;height:20px}
+.fraclabel{text-align:center;min-height:90px;margin-bottom:6px}
+.statrow{display:flex;align-items:center;gap:8px;margin:6px 0}
+.statrow .nm{width:190px;font-weight:600;font-size:15px}
+.statrow .meter{flex:1;height:14px;background:#e4e9f7;border-radius:99px;overflow:hidden}
+.statrow .meter i{display:block;height:100%;background:linear-gradient(90deg,var(--teal),var(--primary))}
+.statrow .val{width:110px;text-align:right;font-size:14px;color:var(--muted)}
+.mtab{display:inline-block;padding:10px 16px;background:#fbfcff;border:2px solid var(--line);border-radius:16px}
+.mrow{display:flex;align-items:center}
+.mc{width:68px;height:56px;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700}
+.mrow.first .mc{border-bottom:3px solid var(--ink)}
+.mc.one span{display:inline-flex;width:40px;height:40px;border:3px solid var(--bad);border-radius:50%;align-items:center;justify-content:center}
+.mc input{width:60px;height:46px;font-size:24px;text-align:center;padding:0;font-weight:700}
+.mc input.bad{border-color:var(--bad);background:#fee2e2}.mc input.good{border-color:var(--ok);background:#dcfce7}
+.mdiv{min-width:76px;height:56px;border-left:3px solid var(--ink);margin-left:6px;padding-left:16px;display:flex;align-items:center;font-size:28px;font-weight:800;color:var(--primary-d)}
+.mtab.xl .mc{width:100px;height:80px;font-size:46px}.mtab.xl .mc.one span{width:60px;height:60px}
+.mtab.xl .mdiv{height:80px;min-width:110px;font-size:46px}
+.pbtns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.pbtn{font-size:28px;font-weight:800;width:72px;height:60px;border-radius:14px;border:3px solid var(--line);background:#fff;cursor:pointer;color:var(--ink)}
+.pbtn:hover{border-color:var(--primary)}.pbtn.hint{border-color:var(--warn);background:#fef3c7}
+.mmsg{min-height:30px;font-size:18px;font-weight:600;text-align:center;margin-top:10px}
+.mmsg.bad{color:var(--bad)}.mmsg.good{color:var(--ok)}.mmsg.tip{color:var(--primary-d)}
+.mstage{display:flex;justify-content:center;margin:10px 0}
+.mformula{font-size:26px;font-weight:700;text-align:center}.mformula input{width:110px;font-size:26px;text-align:center;display:inline-block}
+.mformula.big{font-size:38px;min-height:52px}
+.chain{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:4px 2px;margin:10px 0 14px;min-height:100px}
+.chain .eq{font-size:34px;font-weight:800;margin:0 .3em;color:var(--muted)}
+.sf{display:inline-flex;align-items:stretch}
+.sf .dv{display:flex;flex-direction:column;justify-content:space-between;align-items:flex-start;font-size:16px;color:#db2777;margin-left:4px;padding:3px 0}
+.fbox{border:4px solid var(--ok);border-radius:14px;background:#f0fdf4;padding:4px 12px;display:inline-flex;align-items:center}
+.fbox.num{font-size:40px;font-weight:800}
+.frac .n input{width:96px;height:50px;font-size:30px;text-align:center;padding:0;font-weight:800}
+.sstop{font-size:20px;padding:12px 22px;margin-top:12px}
+.modal .box.alertbox{max-width:560px;max-height:94vh;overflow:auto;border:6px solid var(--bad);background:#fff5f5;animation:shake .5s}
+.modal .box.alertbox.win{border-color:var(--ok);background:linear-gradient(180deg,#ecfdf5,#fff);animation:pop .4s}
+.alertbox .aicon{font-size:76px;line-height:1.1;animation:pulse .55s infinite alternate}
+.alertbox.win .aicon{animation:bounce .9s infinite}
+.alertbox h2{margin:4px 0 10px;font-size:30px}.alertbox.bad h2{color:var(--bad)}.alertbox.win h2{color:var(--ok)}
+.modal .alertbox .abody p{font-size:19px;margin:8px 0;font-weight:600}
+.modal .alertbox .abody p.aline{font-size:22px;background:#fff;border:2px solid var(--line);border-radius:12px;padding:8px 10px}
+.modal .alertbox .abody p.atip{background:#fef3c7;border-radius:12px;padding:10px 12px}
+.okc{color:var(--ok);font-weight:800}.badc{color:var(--bad);font-weight:800}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-12px)}40%{transform:translateX(10px)}60%{transform:translateX(-7px)}80%{transform:translateX(5px)}}
+@keyframes pulse{from{transform:scale(1)}to{transform:scale(1.2)}}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+@keyframes pop{from{transform:scale(.8);opacity:0}to{transform:scale(1);opacity:1}}
+@media(prefers-reduced-motion:reduce){.modal .box.alertbox,.alertbox .aicon{animation:none}}
+.lfrac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;margin:0 6px}
+.lfrac .ln{display:flex;align-items:center;gap:8px;padding:6px 16px;border-bottom:5px solid var(--ink)}
+.lfrac .ld{display:flex;flex-direction:column;align-items:center;padding-top:4px}
+.lfrac .ld small{font-size:15px;font-weight:800;color:var(--teal);text-transform:uppercase;letter-spacing:.05em;line-height:1}
+.nbox{display:inline-block;min-width:54px;text-align:center;border:3px solid var(--ink);border-radius:8px;padding:0 10px;font-size:34px;font-weight:800;background:#fff}
+.lfrac .ld .nbox{border-color:var(--teal);color:#0f766e}
+.stps{text-align:center;margin:4px 0 8px}
+.stp{display:inline-block;padding:5px 12px;border-radius:99px;background:#eef1fb;color:var(--muted);font-weight:700;margin:2px;font-size:14px}
+.stp.on{background:var(--primary);color:#fff}.stp.ok{background:#dcfce7;color:var(--ok)}
+.ain{font-size:26px;height:48px;text-align:center;font-weight:800;padding:0;border:2px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)}
+.ain.bad{border-color:var(--bad);background:#fee2e2}.ain.good{border-color:var(--ok);background:#dcfce7}
+.trow{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px 8px;margin:10px 0;font-size:28px;font-weight:700}
+.op{display:inline-block;font-size:30px;font-weight:800;color:var(--primary-d);background:#eeeaff;border-radius:12px;padding:0 12px}
+.modal{position:fixed;inset:0;background:rgba(31,42,68,.55);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px}
+.modal .box{background:#fff;border-radius:20px;padding:24px;max-width:420px;width:100%;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.3)}
+.modal .box p{font-size:20px;margin:0 0 6px;font-weight:600}
+.modal .row{margin-top:18px}
+.dots{display:flex;gap:4px;flex-wrap:wrap}.dots i{width:14px;height:14px;border-radius:50%;background:var(--ok)}.dots i.x{background:var(--bad)}.dots i.t{background:var(--warn)}
+#demotools{position:fixed;right:10px;bottom:10px;z-index:50;display:flex;gap:6px;align-items:center;background:#1f2a44;color:#fff;border-radius:99px;padding:6px 10px;font-size:13px;opacity:.9;zoom:1}
+#demotools button{background:#fff;color:#1f2a44;border:0;border-radius:99px;padding:5px 10px;font-weight:800;cursor:pointer}
+#democfg{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:#fff7d6;border:2px dashed #e0b400;border-radius:14px;padding:8px 12px;margin-bottom:10px}
+#democfg .cfg{font-size:20px;font-weight:800;text-align:center;border:2px solid #d3d9ea;border-radius:10px;padding:6px 2px}
+#democfg .cfr{display:inline-flex;align-items:center;gap:4px}
+#democfg .cst{display:inline-flex;flex-direction:column;align-items:center;gap:2px}
+#democfg .cst i{display:block;width:100%;height:3px;background:#1f2a44;border-radius:2px}
+#democfg .cplus{font-size:26px;font-weight:900;color:#5a6384}
+#cloudst{position:fixed;left:10px;bottom:10px;z-index:40;background:#fff;border-radius:99px;padding:5px 12px;font-size:13px;font-weight:700;box-shadow:0 2px 8px rgba(40,50,110,.18);color:#166534}
+#cloudst.warn{color:#92400e;background:#fef3c7}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+'use strict';
+/* =====================================================================
+   FracLab v0.8 — juego de fracciones (un solo archivo, sin dependencias)
+
+   v0.8: Paso 3 del reto Suma con una sola línea larga (numeradores arriba, mcm abajo), como en el pizarrón.
+   v0.7: reto «Suma» con distinto denominador (simplificar → mcm → plantilla → sumar), 3 niveles de 5 ejercicios.
+   v0.6: alertas grandes con sirena (primo incorrecto) y de victoria (fracción irreducible) que explican el porqué; pausan el reloj.
+   v0.5: reto «Simplifica» (simples y mixtas, por números primos), 3 niveles de 10 intentos.
+   v0.4: lista de alumnos, música chiptune, MCM en 3 niveles.
+   v0.3: reto «Mínimo común múltiplo» (descomposición simultánea en tabla)
+   y su versión para proyectar paso a paso en el MODO CLASE.
+
+   NOVEDADES v0.2
+   · MODO CLASE (docente): eliges la figura (círculo, cuadrado, rectángulo,
+     pastel, pizza, barra de chocolate), el tipo de fracción (propia,
+     impropia, mixta) y escribes enteros, numerador y denominador; el
+     programa dibuja las figuras necesarias y las colorea.
+   · MODO JUEGO: temporizador por pregunta, figuras variadas según el nivel,
+     y estadísticas (del alumno y para el docente).
+
+   HISTORIAL DE VERSIONES
+     1.0.0  FracLab en la nube (Supabase + GitHub Pages). Acceso del alumno con código de grupo +
+            número de lista + NIP de 4 dígitos (sin nombres ni CURP). Cada intento se guarda en
+            la nube; sin internet queda en cola y se envía al volver la conexión. Zona docente con
+            inicio de sesión real: códigos de grupo, resumen por grupo, quién no ha practicado,
+            reinicio de NIP y exportación CSV. Se retira la capacidad «downloads» de claude.ai.
+     0.11   Modo docente: casillas entero / numerador / denominador para fijar mis fracciones.
+     0.10   Modo docente con ejercicios propios.   0.9  Modo docente juega como los alumnos.
+     0.8    Suma: paso 3 con la línea larga y el mcm debajo.   0.7  Reto Suma (distinto denominador).
+     0.6    Alertas grandes (sirena / victoria) en Simplifica.   0.5  Reto Simplifica.
+     0.4    Lista de alumnos, 3 niveles × 5 intentos en MCM, música estilo chiptune.
+     0.1–0.3  Modo clase, modo juego, figuras, reto MCM y estadísticas.
+
+   ESTRUCTURA (cada MÓDULO se puede mover después a su propio archivo .js;
+   los módulos sin DOM —MathUtil, Content, Shape.layout/hit, Analytics— no
+   dependen del navegador y se reutilizan en Capacitor / Tauri / PWA):
+
+     Config      constantes, habilidades, niveles, tiempos y alertas
+     MathUtil    mcd, mcm, primos, simplificar, mixtos  (base para v0.4+)
+     Content     generador de preguntas, distractores y validación del modo clase
+     Shape       figuras: geometría, dibujo en canvas, detección de toques
+     Sound       efectos con Web Audio
+     Store       almacenamiento: LocalStore (navegador), ApiStore (alumno: guarda en el
+                 equipo y envía a la nube) y TeacherStore (docente: lee la nube)
+     Cloud       Supabase por HTTP: acceso con código+lista+NIP, cola sin internet, docente
+     Analytics   estadísticas por habilidad/figura/nivel y alertas tempranas
+     UI          vistas: acceso, menú, juego, resumen, estadísticas, clase, docente
+   ===================================================================== */
+
+/* ============================ MODULE: Config ======================== */
+const Config = {
+  VERSION: '1.0.0',
+  ROUND_SIZE: 8,
+  TEACHER_PIN: '',            // solo modo local (sin nube): '' = sin PIN. Ejemplo: '2468'
+  // ☁️ Nube (Supabase). La llave es PÚBLICA (anon/publishable); nunca pongas aquí la llave secret/service_role.
+  // Si url queda vacía, FracLab funciona como antes: todo se guarda solo en el navegador.
+  CLOUD: {url: 'https://ckrtyhwyfyisitlddyhj.supabase.co', key: 'sb_publishable_eWOQeERSDYW3Z_AIoxXiJQ_ZVBw0VQZ'},
+  SKILLS: {
+    identify:      {name: 'Identifica la fracción', icon: '🔍', active: true,  desc: 'Mira la figura y elige la fracción.'},
+    color:         {name: 'Colorea la fracción',    icon: '🎨', active: true,  desc: 'Colorea las partes que indica el numerador.'},
+    mcm:           {name: 'Mínimo común múltiplo', icon: '🧮', active: true, desc: 'Descubre el denominador común con la tabla de primos.'},
+    line:          {name: 'Recta numérica',         icon: '📏', active: false, desc: 'Ubica fracciones en la recta.'},
+    mixed:         {name: 'Fracciones con entero',  icon: '🧩', active: false, desc: 'Números mixtos e impropias.'},
+    primes:        {name: 'Primos y factores',      icon: '🔢', active: false, desc: 'Números primos y descomposición.'},
+    simplify:      {name: 'Simplifica',             icon: '✂️', active: true,  desc: 'Simplifica con números primos: simples y mixtas.'},
+    addsub_like:   {name: 'Suma y resta (igual denominador)', icon: '➕', active: false, desc: 'Operaciones básicas.'},
+    addsub_unlike: {name: 'Suma (distinto denominador)', icon: '🏁', active: true, desc: 'Simplifica, saca el mcm, usa la plantilla y suma.'}
+  },
+  SHAPES: {
+    circle: {name: 'Círculo',            icon: '⚪'},
+    square: {name: 'Cuadrado',           icon: '⬜'},
+    rect:   {name: 'Rectángulo',         icon: '▭'},
+    pastel: {name: 'Pastel',             icon: '🎂'},
+    pizza:  {name: 'Pizza',              icon: '🍕'},
+    choco:  {name: 'Barra de chocolate', icon: '🍫'}
+  },
+  // Figuras que aparecen al azar en cada nivel del juego
+  LEVELS: {
+    1: {name: 'Nivel 1', denoms: [2, 3, 4, 5, 6],               shapes: ['rect', 'circle'],                                      contiguous: true},
+    2: {name: 'Nivel 2', denoms: [2, 3, 4, 5, 6, 7, 8],         shapes: ['rect', 'circle', 'square', 'choco'],                    contiguous: false},
+    3: {name: 'Nivel 3', denoms: [3, 4, 5, 6, 7, 8, 9, 10, 12], shapes: ['rect', 'circle', 'square', 'choco', 'pizza', 'pastel'], contiguous: false}
+  },
+  // Segundos por pregunta según habilidad y nivel
+  TIME: {identify: {1: 20, 2: 15, 3: 12}, color: {1: 30, 2: 22, 3: 16}, mcm: {1: 90, 2: 105, 3: 130}, simplify: {1: 60, 2: 90, 3: 100}, addsub_unlike: {1: 180, 2: 240, 3: 360}},   // MCM: + 15 s por cada número después del segundo
+  // Reto MCM: 5 intentos (colecciones) por ronda. ks = cuántos números hay en cada colección (se alternan);
+  // lcms = mínimos comunes múltiplos posibles; min/max = rango de los números de la colección.
+  MCM: {ROUND: 5, PRIMES: [2, 3, 5, 7, 11, 13],
+        LEVELS: {
+          1: {ks: [2],    min: 2, max: 12, lcms: [12, 15, 18, 20, 24, 28, 30, 36, 40, 42, 45, 60],              desc: '2 números'},
+          2: {ks: [3, 4], min: 2, max: 24, lcms: [24, 30, 36, 40, 42, 48, 60, 72, 84, 90, 120],                 desc: '3 y 4 números'},
+          3: {ks: [5],    min: 2, max: 60, lcms: [60, 72, 84, 90, 120, 180, 210, 252, 360, 420],               desc: '5 números'}
+        }},
+  // Reto Simplifica: 10 intentos por ronda. Nivel 1 = fracciones simples, 2 = mixtas, 3 = variado.
+  // bMin/bMax: denominador de la fracción ya simplificada; mults: por cuánto se «infla»; maxD: denominador máximo.
+  SIMP: {ROUND: 10, PRIMES: [2, 3, 5, 7, 11, 13],
+         LEVELS: {
+           1: {desc: 'fracciones simples', bMin: 2, bMax: 7,  mults: [2, 3, 4, 5, 6, 8, 9, 10], maxD: 48,  mmults: [2, 3, 4, 5, 6, 8, 9, 10], mmaxD: 48,  maxW: 0, irrMin: 5, irrMax: 15,
+               kinds: ['simple', 'simple', 'simple', 'simple', 'simple', 'simple', 'simple', 'simple', 'simple', 'irred']},
+           2: {desc: 'fracciones mixtas',  bMin: 2, bMax: 6,  mults: [2, 3, 4, 5], maxD: 24,                    mmults: [2, 3, 4, 5], mmaxD: 24,                   maxW: 5, irrMin: 3, irrMax: 12,
+               kinds: ['mixed', 'mixed', 'mixed', 'mixed', 'mixed', 'mixed', 'mixed', 'mixed', 'mixedirred', 'mixedirred']},
+           3: {desc: 'variado (simples, impropias y mixtas)', bMin: 2, bMax: 11, mults: [4, 6, 8, 9, 10, 12, 14, 15, 18], maxD: 144, mmults: [2, 3, 4, 6, 8], mmaxD: 48, maxW: 9, irrMin: 12, irrMax: 40,
+               kinds: ['simple', 'simple', 'simple', 'improper', 'improper', 'mixed', 'mixed', 'mixed', 'irred', 'mixedirred']}
+         }},
+  // Reto Suma con distinto denominador: 5 ejercicios por nivel. bMax = denominador máximo (ya simplificado); maxL = mcm máximo.
+  ADD: {ROUND: 5,
+        LEVELS: {
+          1: {desc: '2 fracciones propias',  k: 2, bMax: 8, maxL: 24, maxD: 12, maxW: 0, pRed: 0.4, kinds: ['proper']},
+          2: {desc: '2 fracciones mixtas',   k: 2, bMax: 9, maxL: 36, maxD: 18, maxW: 4, pRed: 0.3, kinds: ['mixed']},
+          3: {desc: '3 fracciones variadas', k: 3, bMax: 9, maxL: 60, maxD: 18, maxW: 4, pRed: 0.3, kinds: ['mixed', 'proper', 'improper']}
+        }},
+  CLASS: {maxDen: 24, maxWhole: 5, maxFigs: 6},
+  ALERTS: {minAttempts: 6, lowAcc: 0.6, critAcc: 0.5, window: 20, denomErrors: 3,
+           fastMs: 1500, fastCount: 5, fastAcc: 0.5, inactiveDays: 7, timeouts: 3},
+  ERR_LABELS: {
+    swap: 'Invierte numerador y denominador',
+    complement: 'Confunde partes coloreadas con partes sin colorear',
+    off1: 'Se equivoca por una sola parte',
+    less: 'Colorea menos partes de las que indica el numerador',
+    more: 'Colorea más partes de las que indica el numerador',
+    timeout: 'Se le acaba el tiempo',
+    prime: 'Elige un divisor que no divide a ningún número de la fila',
+    down: 'No baja los números que no se pueden dividir',
+    div: 'Se equivoca al dividir',
+    mult: 'Se equivoca al multiplicar los divisores',
+    sprime: 'Elige un primo que no divide al numerador y al denominador',
+    early: 'Dice que ya no se puede simplificar cuando todavía se puede',
+    noadd: 'Multiplica el entero por el denominador pero olvida sumar el numerador',
+    conv: 'Se equivoca al convertir la fracción mixta en impropia',
+    factor: 'Se equivoca al dividir el mcm entre el denominador',
+    mult2: 'Se equivoca al multiplicar por el numerador (plantilla)',
+    sum: 'Se equivoca al sumar los numeradores',
+    other: 'Otro tipo de error'
+  }
+};
+
+/* ============================ MODULE: MathUtil ====================== */
+const MathUtil = {
+  gcd(a, b) { a = Math.abs(a); b = Math.abs(b); while (b) { [a, b] = [b, a % b]; } return a; },
+  lcm(a, b) { return (a === 0 || b === 0) ? 0 : Math.abs(a) / MathUtil.gcd(a, b) * Math.abs(b); },
+  isPrime(n) {
+    if (n < 2) return false;
+    for (let i = 2; i * i <= n; i++) if (n % i === 0) return false;
+    return true;
+  },
+  primeFactors(n) {
+    const f = []; let m = n;
+    for (let p = 2; p * p <= m; p++) while (m % p === 0) { f.push(p); m /= p; }
+    if (m > 1) f.push(m);
+    return f;
+  },
+  simplify(n, d) { const g = MathUtil.gcd(n, d) || 1; return {n: n / g, d: d / g}; },
+  toMixed(n, d) { return {w: Math.floor(n / d), n: n % d, d}; },
+  sameValue(a, b) { return a.n * b.d === b.n * a.d; },
+  // ---- Mínimo común múltiplo por descomposición simultánea (el método del pizarrón) ----
+  spf(n) { for (let p = 2; p * p <= n; p++) if (n % p === 0) return p; return n; },
+  lcmAll(a) { return a.reduce((x, y) => MathUtil.lcm(x, y), 1); },
+  // Un número que ya llegó a 1 termina ahí: en las filas siguientes su columna queda vacía (null)
+  nextRow(row, p) { return row.map(x => (x === null || x === 1 ? null : (x % p === 0 ? x / p : x))); },
+  rowDone(row) { return row.every(x => x === null || x === 1); },
+  smallestDivisor(row) { const c = row.filter(x => x > 1).map(MathUtil.spf); return c.length ? Math.min.apply(null, c) : null; },
+  // Simplificación por primos: divide arriba y abajo entre el primo más pequeño que divide a ambos, hasta que no haya ninguno
+  simpSteps(n, d) {
+    const chain = [{n, d, p: 0}], ps = []; let a = n, b = d;
+    for (let g = MathUtil.gcd(a, b); g > 1; g = MathUtil.gcd(a, b)) {
+      const p = MathUtil.spf(g); ps.push(p); chain[chain.length - 1].p = p; a /= p; b /= p; chain.push({n: a, d: b, p: 0});
+    }
+    return {chain, ps, res: {n: a, d: b}};
+  },
+  mcmTable(nums) {
+    const rows = [nums.slice()], divs = []; let r = nums.slice();
+    while (!MathUtil.rowDone(r)) { const p = MathUtil.smallestDivisor(r); divs.push(p); r = MathUtil.nextRow(r, p); rows.push(r); }
+    return {rows, divs, mcm: divs.reduce((a, b) => a * b, 1)};
+  }
+};
+
+/* ============================ MODULE: Content ======================= */
+const rand = k => Math.floor(Math.random() * k);
+const pick = arr => arr[rand(arr.length)];
+function shuffle(arr) { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = rand(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+
+const Content = {
+  make(skill, level, seen) {
+    const L = Config.LEVELS[level];
+    let q = null, tries = 0;
+    do {
+      const d = pick(L.denoms), n = 1 + rand(d - 1);
+      q = {skill, level, n, d, shape: pick(L.shapes)};
+    } while (seen && seen.has(q.n + '/' + q.d) && ++tries < 30);
+    q.filled = Content.fillSet(q, L.contiguous);
+    if (skill === 'identify') q.options = Content.options(q);
+    return q;
+  },
+  // Elige figuras sin repetir la misma dos veces seguidas cuando hay opciones
+  makeRound(skill, level, size) {
+    const seen = new Set(), qs = [];
+    for (let i = 0; i < size; i++) {
+      let q, t = 0;
+      do { q = Content.make(skill, level, seen); } while (qs.length && qs[qs.length - 1].shape === q.shape && ++t < 12);
+      seen.add(q.n + '/' + q.d); qs.push(q);
+    }
+    return qs;
+  },
+  // ---- Reto MCM: colecciones de números cuyos factores primos son 2,3,5,7,11,13 ----
+  smooth(n) { let m = n; Config.MCM.PRIMES.forEach(p => { while (m % p === 0) m /= p; }); return m === 1; },
+  divisors(n) { const r = []; for (let i = 2; i < n; i++) if (n % i === 0) r.push(i); return r; },
+  // Elige un mcm objetivo y k divisores suyos (sin repetir) cuyo mcm sea justo ese número
+  makeMcm(level, seen, k) {
+    const C = Config.MCM.LEVELS[level]; k = k || pick(C.ks);
+    for (let t = 0; t < 900; t++) {
+      const L = pick(C.lcms), ds = Content.divisors(L).filter(d => d >= C.min && d <= C.max);
+      if (ds.length < k) continue;
+      const nums = shuffle(ds).slice(0, k);
+      if (MathUtil.lcmAll(nums) !== L) continue;
+      const key = nums.slice().sort((x, y) => x - y).join(',');
+      if (seen && seen.has(key)) continue;
+      return {skill: 'mcm', level, nums, mcm: L, key};
+    }
+    const nums = {2: [4, 6], 3: [3, 4, 6], 4: [2, 3, 4, 6], 5: [2, 3, 4, 5, 6]}[k] || [4, 6];
+    return {skill: 'mcm', level, nums, mcm: MathUtil.lcmAll(nums), key: nums.join(',')};
+  },
+  // Una ronda = 5 colecciones; en el nivel 2 se alternan colecciones de 3 y de 4 números
+  makeMcmRound(level, size) {
+    const seen = new Set(), qs = [], ks = Config.MCM.LEVELS[level].ks;
+    for (let i = 0; i < size; i++) { const q = Content.makeMcm(level, seen, ks[i % ks.length]); seen.add(q.key); qs.push(q); }
+    return qs;
+  },
+  // ---- Reto Simplifica ----
+  makeSimp(level, seen, kind) {
+    const L = Config.SIMP.LEVELS[level], r = (a, b) => a + rand(b - a + 1), g = MathUtil.gcd;
+    for (let t = 0; t < 500; t++) {
+      let w = 0, n, d;
+      if (kind === 'simple' || kind === 'improper') {
+        const b = r(L.bMin, L.bMax), a = kind === 'simple' ? r(1, b - 1) : r(b + 1, 2 * b + 3);
+        if (g(a, b) !== 1) continue;
+        const m = pick(L.mults); n = a * m; d = b * m; if (d > L.maxD) continue;
+      } else if (kind === 'mixed') {
+        const b = r(L.bMin, L.bMax), a = r(1, b - 1);
+        if (g(a, b) !== 1) continue;
+        const m = pick(L.mmults); n = a * m; d = b * m; w = r(1, L.maxW); if (d > L.mmaxD) continue;
+      } else {
+        d = r(L.irrMin, L.irrMax); n = r(1, d - 1); if (g(n, d) !== 1) continue;
+        if (kind === 'mixedirred') w = r(1, L.maxW || 5);
+      }
+      const key = kind + ':' + w + ':' + n + '/' + d;
+      if (seen && seen.has(key)) continue;
+      return Content.finishSimp({skill: 'simplify', level, kind, w, n, d, key});
+    }
+    return Content.finishSimp({skill: 'simplify', level, kind, w: 0, n: 8, d: 12, key: 'fb' + rand(1e6)});
+  },
+  finishSimp(q) {
+    const sol = MathUtil.simpSteps(q.w * q.d + q.n, q.d);
+    q.N = q.w * q.d + q.n; q.res = sol.res; q.ps = sol.ps; return q;
+  },
+  makeSimpRound(level, size) {
+    const seen = new Set(), qs = [], kinds = shuffle(Config.SIMP.LEVELS[level].kinds).slice(0, size);
+    kinds.forEach(k => { const q = Content.makeSimp(level, seen, k); seen.add(q.key); qs.push(q); });
+    return qs;
+  },
+  // ---- Reto Suma con distinto denominador ----
+  solveAdd(fr) {
+    const red = fr.map(f => MathUtil.simpSteps(f.w * f.d + f.n, f.d).res), dens = red.map(r => r.d), mcm = MathUtil.lcmAll(dens);
+    const facs = dens.map(d => mcm / d), prods = red.map((r, i) => r.n * facs[i]), T = prods.reduce((a, b) => a + b, 0);
+    return {red, dens, mcm, facs, prods, T, res: MathUtil.simpSteps(T, mcm).res};
+  },
+  makeAdd(level, seen) {
+    const L = Config.ADD.LEVELS[level], g = MathUtil.gcd, r = (a, b) => a + rand(b - a + 1);
+    for (let t = 0; t < 3000; t++) {
+      const bs = []; for (let i = 0; i < L.k; i++) bs.push(r(2, L.bMax));
+      if (new Set(bs).size !== L.k) continue;
+      const lcm = MathUtil.lcmAll(bs); if (lcm > L.maxL) continue;
+      if (lcm === Math.max.apply(null, bs) && Math.random() > 0.2) continue;   // casi siempre el mcm es distinto de todos los denominadores
+      let kinds = bs.map(() => pick(L.kinds)); if (L.kinds.includes('mixed') && !kinds.includes('mixed')) kinds[rand(kinds.length)] = 'mixed';
+      const fr = []; let bad = false;
+      bs.forEach((b, i) => {
+        const kind = kinds[i], a = kind === 'improper' ? r(b + 1, 2 * b + 2) : r(1, b - 1);
+        if (g(a, b) !== 1) { bad = true; return; }
+        const m = Math.random() < L.pRed ? pick([2, 3]) : 1, mm = b * m <= L.maxD ? m : 1;
+        fr.push({w: kind === 'mixed' ? r(1, L.maxW) : 0, n: a * mm, d: b * mm});
+      });
+      if (bad) continue;
+      const sol = Content.solveAdd(fr); if (sol.res.d === 1) continue;
+      const key = fr.map(f => (f.w ? f.w + ' ' : '') + f.n + '/' + f.d).join(' + ');
+      if (seen && seen.has(key)) continue;
+      return {skill: 'addsub_unlike', level, fr, key, sol, mcm: sol.mcm};
+    }
+    const fr = [{w: 1, n: 1, d: 2}, {w: 2, n: 1, d: 4}], sol = Content.solveAdd(fr);
+    return {skill: 'addsub_unlike', level, fr, key: '1 1/2 + 2 1/4', sol, mcm: sol.mcm};
+  },
+  makeAddRound(level, size) {
+    const seen = new Set(), qs = [];
+    for (let i = 0; i < size; i++) { const q = Content.makeAdd(level, seen); seen.add(q.key); qs.push(q); }
+    return qs;
+  },
+  fillSet(q, contiguous) {
+    const idx = [...Array(q.d).keys()];
+    return new Set(contiguous ? idx.slice(0, q.n) : shuffle(idx).slice(0, q.n));
+  },
+  // 1 correcta + 3 distractores con valores distintos entre sí y distintos de la correcta
+  options(q) {
+    const right = {n: q.n, d: q.d, ok: true};
+    const cands = [
+      {n: q.d, d: q.n}, {n: q.n + 1, d: q.d}, {n: q.n - 1, d: q.d},
+      {n: q.n, d: q.d + 1}, {n: q.n, d: q.d - 1}, {n: q.d - q.n, d: q.d}
+    ].filter(c => c.n >= 1 && c.d >= 2 && c.n < c.d);
+    const chosen = [right];
+    for (const c of shuffle(cands)) {
+      if (chosen.length === 4) break;
+      if (chosen.every(o => !MathUtil.sameValue(o, c))) chosen.push({n: c.n, d: c.d, ok: false});
+    }
+    while (chosen.length < 4) { // relleno (con d = 2 hay pocos distractores naturales)
+      const d = 2 + rand(Math.max(q.d, 6)), n = 1 + rand(d - 1), c = {n, d};
+      if (chosen.every(o => !MathUtil.sameValue(o, c))) chosen.push({n, d, ok: false});
+    }
+    return shuffle(chosen);
+  },
+  classifyIdentify(q, o) {
+    if (o.n === q.d && o.d === q.n) return 'swap';
+    if (o.d === q.d && o.n === q.d - q.n) return 'complement';
+    if ((o.d === q.d && Math.abs(o.n - q.n) === 1) || (o.n === q.n && Math.abs(o.d - q.d) === 1)) return 'off1';
+    return 'other';
+  },
+  classifyColor(q, k) {
+    if (k === q.d - q.n && k !== q.n) return 'complement';
+    return k < q.n ? 'less' : 'more';
+  },
+  // ---- Modo clase: valida enteros / numerador / denominador según el tipo ----
+  validateClass(c) {
+    const K = Config.CLASS, d = c.d, n = c.n, w = c.tipo === 'mixta' ? c.w : 0;
+    const bad = msg => ({ok: false, msg});
+    if (![d, n, w].every(Number.isInteger)) return bad('Escribe números enteros en todos los campos.');
+    if (d < 2 || d > K.maxDen) return bad('El denominador debe estar entre 2 y ' + K.maxDen + '.');
+    if (c.tipo === 'propia' && !(n >= 1 && n < d)) return bad('En una fracción propia el numerador es mayor que 0 y menor que el denominador.');
+    if (c.tipo === 'impropia' && n < d) return bad('En una fracción impropia el numerador es mayor o igual que el denominador.');
+    if (c.tipo === 'mixta') {
+      if (w < 1 || w > K.maxWhole) return bad('En una fracción mixta el entero va de 1 a ' + K.maxWhole + '.');
+      if (!(n >= 1 && n < d)) return bad('En una fracción mixta la parte fraccionaria es propia (numerador menor que el denominador).');
+    }
+    const total = w * d + n, nf = Math.max(1, Math.ceil(total / d));
+    if (nf > K.maxFigs) return bad('Se necesitarían ' + nf + ' figuras; el máximo es ' + K.maxFigs + '. Usa un numerador menor.');
+    return {ok: true, w, n, d, total, nf};
+  },
+  randomClass(tipo) {
+    const d = 2 + rand(11);
+    if (tipo === 'propia') return {tipo, w: 0, n: 1 + rand(d - 1), d};
+    if (tipo === 'mixta') return {tipo, w: 1 + rand(3), n: 1 + rand(d - 1), d};
+    const maxN = Math.min(d * Config.CLASS.maxFigs, d * 3 + d - 1);
+    return {tipo, w: 0, n: d + 1 + rand(maxN - d), d};
+  }
+};
+
+/* ============================ MODULE: Roster ======================== */
+const normGroup = g => String(g || '').trim().toUpperCase().replace(/\s+/g, '');
+const Roster = {
+  firstName(n) { return String(n || '').trim().split(/\s+/)[0] || ''; },
+  /* Cada línea puede ser:  «Nombre»  (se numera en orden)  ·  «3 Nombre» · «3. Nombre» · «3, Nombre» · «3;Nombre» · «1F;3;Nombre»
+     Devuelve {list: [{group, id, name}], errors: [texto]} */
+  parse(text, group) {
+    const list = [], errors = [], taken = {}, last = {};
+    String(text || '').split(/\r?\n/).forEach((raw, ln) => {
+      const line = raw.replace(/^\uFEFF/, '').trim().replace(/^["']+|["']+$/g, '').trim(); if (!line) return;
+      if (/^(n[uú]mero|n[uú]m\.?|lista|no\.?|#)\s*[,;\t]\s*(nombre|alumno)/i.test(line)) return;   // encabezado de una tabla
+      let g = group, id = null, name = line, m;
+      if ((m = line.match(/^([^\s,;\t]*[A-Za-z][^\s,;\t]*)\s*[,;\t]\s*(\d{1,3})\s*[,;\t]\s*(.+)$/))) { g = m[1]; id = +m[2]; name = m[3]; }
+      else if ((m = line.match(/^(\d{1,3})\s*(?:[.,;:)\t-]\s*|\s+)(.+)$/))) { id = +m[1]; name = m[2]; }
+      name = name.replace(/^["'\s]+|["'\s]+$/g, '').replace(/\s+/g, ' ');
+      g = normGroup(g);
+      if (!g) return errors.push('Línea ' + (ln + 1) + ': falta el grupo.');
+      if (!name) return errors.push('Línea ' + (ln + 1) + ': falta el nombre.');
+      if (id == null) id = (last[g] || 0) + 1;
+      if (id < 1 || id > 99) return errors.push('Línea ' + (ln + 1) + ': el número de lista debe ser de 1 a 99.');
+      last[g] = id;
+      const k = g + '-' + id;
+      if (taken[k]) return errors.push('Línea ' + (ln + 1) + ': el número ' + id + ' de ' + g + ' está repetido.');
+      taken[k] = 1; list.push({group: g, id, name});
+    });
+    return {list, errors};
+  },
+  toText(students) { return students.sort((a, b) => a.id - b.id).map(s => s.id + '. ' + (s.name || '')).join('\n'); }
+};
+
+/* ============================ MODULE: Shape ========================= */
+const Shape = {
+  ROUND: {circle: 1, pizza: 1, pastel: 1},
+  THEMES: {
+    circle: {on: '#2bb3a3', off: '#ffffff', line: '#1f2a44', lw: 3},
+    square: {on: '#2bb3a3', off: '#ffffff', line: '#1f2a44', lw: 3},
+    rect:   {on: '#2bb3a3', off: '#ffffff', line: '#1f2a44', lw: 3},
+    pizza:  {on: '#f6b93b', off: '#f8e8c8', line: '#8a4b14', lw: 2.5},
+    pastel: {on: '#f8a5c2', off: '#fff1b8', line: '#7b2d55', lw: 2.5},
+    choco:  {on: '#6f3f22', off: '#ead7b7', line: '#3a2212', lw: 3}
+  },
+  CURSOR: '#f59e0b',
+  gridDims(d) { let best = [1, d]; for (let r = 2; r * r <= d; r++) if (d % r === 0) best = [r, d / r]; return best; },
+  aspect(kind, d) {
+    if (kind === 'rect') return 2;
+    if (kind === 'choco') { const [r, c] = Shape.gridDims(d); return (c * 1.0) / (r * 1.1); }
+    return 1;
+  },
+  fit(aspect, box, pad) {
+    const w = box.w - 2 * pad, h = box.h - 2 * pad;
+    const W = (w / h > aspect) ? h * aspect : w, H = (w / h > aspect) ? h : w / aspect;
+    return {x: box.x + (box.w - W) / 2, y: box.y + (box.h - H) / 2, w: W, h: H};
+  },
+  boxes(n, W, H) {
+    const cols = n <= 3 ? n : Math.ceil(n / 2), rows = n <= 3 ? 1 : 2, bw = W / cols, bh = H / rows, out = [];
+    for (let i = 0; i < n; i++) {
+      const row = Math.floor(i / cols), inRow = row < rows - 1 ? cols : n - cols * (rows - 1), col = i % cols;
+      out.push({x: (W - inRow * bw) / 2 + col * bw, y: row * bh, w: bw, h: bh});
+    }
+    return out;
+  },
+  /* Devuelve {W,H,kind,d,nf,parts,figs,cols,rows}. parts[i], i = fig*d + k, en orden de coloreado. */
+  layout(kind, d, nf, W, H) {
+    nf = nf || 1; W = W || 640; H = H || 320;
+    const parts = [], figs = [];
+    let cols = d, rows = 1;
+    Shape.boxes(nf, W, H).forEach((b, f) => {
+      const R = Shape.fit(Shape.aspect(kind, d), b, Math.min(b.w, b.h) * 0.07);
+      const fig = {x: R.x, y: R.y, w: R.w, h: R.h, cx: R.x + R.w / 2, cy: R.y + R.h / 2, r: Math.min(R.w, R.h) / 2};
+      figs.push(fig);
+      if (Shape.ROUND[kind]) {
+        for (let k = 0; k < d; k++) {
+          const a0 = -Math.PI / 2 + k * 2 * Math.PI / d;
+          parts.push({t: 's', cx: fig.cx, cy: fig.cy, r: fig.r, a0, a1: a0 + 2 * Math.PI / d, k, d, fig: f});
+        }
+      } else if (kind === 'rect') {
+        for (let k = 0; k < d; k++) parts.push({t: 'r', x: R.x + k * R.w / d, y: R.y, w: R.w / d, h: R.h, k, d, fig: f});
+      } else { // square y choco: cuadrícula de partes iguales
+        const [r, c] = Shape.gridDims(d);
+        cols = c; rows = r;
+        for (let k = 0; k < d; k++)
+          parts.push({t: 'r', x: R.x + (k % c) * R.w / c, y: R.y + Math.floor(k / c) * R.h / r, w: R.w / c, h: R.h / r, k, d, fig: f});
+      }
+    });
+    return {W, H, kind, d, nf, parts, figs, cols, rows};
+  },
+  hit(L, x, y) {
+    for (let i = 0; i < L.parts.length; i++) {
+      const p = L.parts[i];
+      if (p.t === 'r') { if (x >= p.x && x <= p.x + p.w && y >= p.y && y <= p.y + p.h) return i; }
+      else {
+        const dx = x - p.cx, dy = y - p.cy;
+        if (dx * dx + dy * dy <= p.r * p.r) {
+          const ang = (Math.atan2(dy, dx) + Math.PI / 2 + 2 * Math.PI) % (2 * Math.PI), s = 2 * Math.PI / p.d;
+          if (ang >= p.k * s - 1e-9 && ang < (p.k + 1) * s) return i;
+        }
+      }
+    }
+    return -1;
+  },
+  draw(canvas, L, filled, o) {
+    o = o || {};
+    const ctx = canvas.getContext('2d'), sc = canvas.width / L.W, th = Shape.THEMES[L.kind];
+    ctx.setTransform(sc, 0, 0, sc, 0, 0);
+    ctx.clearRect(0, 0, L.W, L.H);
+    const path = p => { ctx.beginPath(); if (p.t === 'r') ctx.rect(p.x, p.y, p.w, p.h); else { ctx.moveTo(p.cx, p.cy); ctx.arc(p.cx, p.cy, p.r, p.a0, p.a1); ctx.closePath(); } };
+    const lwScale = Math.max(0.6, Math.min(1.4, L.figs[0].r / 140));
+    ctx.lineJoin = 'round';
+    L.parts.forEach((p, i) => {
+      const on = filled.has(i);
+      path(p); ctx.fillStyle = on ? th.on : th.off; ctx.fill();
+      ctx.lineWidth = th.lw * lwScale; ctx.strokeStyle = th.line; ctx.stroke();
+      if (L.kind === 'pizza' && on) {
+        const m = (p.a0 + p.a1) / 2;
+        [[0.62, 0.11], [0.32, 0.075]].forEach(([f, rr]) => { ctx.beginPath(); ctx.arc(p.cx + Math.cos(m) * p.r * f, p.cy + Math.sin(m) * p.r * f, p.r * rr * Math.min(1, 6 / p.d + 0.35), 0, 7); ctx.fillStyle = '#c0392b'; ctx.fill(); });
+      }
+      if (L.kind === 'pastel' && on) {
+        const m = (p.a0 + p.a1) / 2;
+        ctx.beginPath(); ctx.arc(p.cx + Math.cos(m) * p.r * 0.66, p.cy + Math.sin(m) * p.r * 0.66, p.r * 0.07, 0, 7); ctx.fillStyle = '#d63031'; ctx.fill();
+        ctx.beginPath(); ctx.arc(p.cx + Math.cos(m) * p.r * 0.36, p.cy + Math.sin(m) * p.r * 0.36, p.r * 0.045, 0, 7); ctx.fillStyle = '#ffffff'; ctx.fill();
+      }
+      if (L.kind === 'choco') {
+        const ix = Math.min(p.w, p.h) * 0.16;
+        ctx.fillStyle = on ? '#8a5230' : '#f3e4cb'; ctx.fillRect(p.x + ix, p.y + ix, p.w - 2 * ix, p.h - 2 * ix);
+        ctx.lineWidth = 1.5 * lwScale; ctx.strokeStyle = on ? '#4d2a15' : '#cdb48c'; ctx.strokeRect(p.x + ix, p.y + ix, p.w - 2 * ix, p.h - 2 * ix);
+      }
+    });
+    L.figs.forEach(f => { // contorno exterior de cada figura
+      ctx.beginPath();
+      if (Shape.ROUND[L.kind]) {
+        if (L.kind === 'pizza') { ctx.arc(f.cx, f.cy, f.r - 5 * lwScale, 0, 7); ctx.lineWidth = 10 * lwScale; ctx.strokeStyle = '#c47f2c'; ctx.stroke(); ctx.beginPath(); }
+        ctx.arc(f.cx, f.cy, f.r, 0, 7); ctx.lineWidth = (L.kind === 'pastel' ? 5 : th.lw + 1) * lwScale;
+      } else { ctx.rect(f.x, f.y, f.w, f.h); ctx.lineWidth = (th.lw + 1.5) * lwScale; }
+      ctx.strokeStyle = th.line; ctx.stroke();
+    });
+    if (o.numbers) {
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#1f2a44';
+      L.parts.forEach(p => {
+        let x, y, s;
+        if (p.t === 'r') { x = p.x + p.w / 2; y = p.y + p.h / 2; s = Math.min(p.w, p.h) * 0.42; }
+        else { const m = (p.a0 + p.a1) / 2; x = p.cx + Math.cos(m) * p.r * 0.72; y = p.cy + Math.sin(m) * p.r * 0.72; s = Math.min(p.r * 0.22, p.r * 4 / p.d); }
+        ctx.font = '700 ' + Math.max(9, s) + 'px "Segoe UI", Arial'; ctx.fillText(p.k + 1, x, y);
+      });
+    }
+    if (o.cursor != null && o.cursor >= 0 && L.parts[o.cursor]) {
+      path(L.parts[o.cursor]); ctx.setLineDash([8, 6]); ctx.lineWidth = 5 * lwScale; ctx.strokeStyle = Shape.CURSOR; ctx.stroke(); ctx.setLineDash([]);
+    }
+  }
+};
+
+/* ============================ MODULE: Sound ========================= */
+const Sound = {
+  ctx: null, on: true,
+  beep(freq, dur, type, delay, vol) {
+    if (!Sound.on) return;
+    try {
+      Sound.ctx = Sound.ctx || new (window.AudioContext || window.webkitAudioContext)();
+      const c = Sound.ctx, o = c.createOscillator(), g = c.createGain(), t = c.currentTime + (delay || 0);
+      o.type = type || 'sine'; o.frequency.value = freq;
+      g.gain.setValueAtTime(vol || 0.08, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + dur);
+    } catch (e) { /* sin audio */ }
+  },
+  ok() { Sound.beep(660, 0.12); Sound.beep(880, 0.18, 'sine', 0.12); },
+  bad() { Sound.beep(180, 0.28, 'sawtooth', 0, 0.06); },
+  tick() { Sound.beep(1000, 0.05, 'square', 0, 0.03); },
+  siren() { for (let i = 0; i < 6; i++) Sound.beep(i % 2 ? 640 : 960, 0.16, 'square', i * 0.16, 0.05); },
+  win() { [523, 659, 784, 1046].forEach((f, i) => Sound.beep(f, 0.18, 'triangle', i * 0.13)); }
+};
+
+/* ============================ MODULE: Music ========================= */
+/* Chiptune original (canal de pulso + triángulo + ruido), sin archivos de audio.
+   La tensión (0 → 1) sube el tempo y va sumando capas conforme se acaba el tiempo. */
+const Music = {
+  on: true, tension: 0, tmr: null, step: 0, nextT: 0, master: null, noiseBuf: null, notes: 0, bpm: 112,
+  CH: [[45, 0], [41, 1], [43, 1], [40, 1]],            // raíz (MIDI) y si el acorde es mayor: La m · Fa · Sol · Mi
+  LEAD: [69,0,72,0, 76,0,74,72, 69,0,72,0, 71,0,0,0,    // 4 compases de melodía (0 = silencio)
+         65,0,69,0, 72,0,71,69, 65,0,69,0, 67,0,0,0,
+         67,0,71,0, 74,0,72,71, 67,0,71,0, 69,0,0,0,
+         68,0,71,0, 76,0,74,71, 68,0,71,0, 69,70,71,0],
+  hz: m => 440 * Math.pow(2, (m - 69) / 12),
+  bpmNow() { return 112 + 84 * Music.tension; },
+  ctx() {
+    try {
+      Sound.ctx = Sound.ctx || new (window.AudioContext || window.webkitAudioContext)();
+      if (Sound.ctx.state === 'suspended') Sound.ctx.resume();
+      return Sound.ctx;
+    } catch (e) { return null; }
+  },
+  tone(m, t, dur, type, vol) {
+    const c = Sound.ctx, o = c.createOscillator(), g = c.createGain();
+    o.type = type; o.frequency.setValueAtTime(Music.hz(m), t);
+    g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol, t + 0.006);
+    g.gain.setValueAtTime(vol, t + Math.max(0.008, dur * 0.55)); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(Music.master); o.start(t); o.stop(t + dur + 0.02); Music.notes++;
+  },
+  kick(t, vol) {
+    const c = Sound.ctx, o = c.createOscillator(), g = c.createGain();
+    o.type = 'sine'; o.frequency.setValueAtTime(160, t); o.frequency.exponentialRampToValueAtTime(42, t + 0.09);
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.12);
+    o.connect(g); g.connect(Music.master); o.start(t); o.stop(t + 0.14); Music.notes++;
+  },
+  hat(t, vol) {
+    const c = Sound.ctx;
+    if (!Music.noiseBuf) { const b = c.createBuffer(1, Math.floor(c.sampleRate * 0.05), c.sampleRate), d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; Music.noiseBuf = b; }
+    const n = c.createBufferSource(), g = c.createGain(), f = c.createBiquadFilter();
+    n.buffer = Music.noiseBuf; f.type = 'highpass'; f.frequency.value = 6000;
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.04);
+    n.connect(f); f.connect(g); g.connect(Music.master); n.start(t); n.stop(t + 0.05); Music.notes++;
+  },
+  playStep(s, t) {
+    const T = Music.tension, i = s % 16, ch = Music.CH[Math.floor(s / 16) % 4], root = ch[0], sec = 60 / Music.bpmNow() / 4;
+    // bajo (triángulo): corcheas al inicio; semicorcheas cuando el tiempo se agota
+    if (T >= 0.55) Music.tone(root + (i % 2 ? 12 : 0), t, sec * 0.9, 'triangle', 0.1);
+    else if (i % 2 === 0) Music.tone(root + (i % 4 === 2 ? 12 : 0), t, sec * 1.8, 'triangle', 0.1);
+    // arpegio (pulso)
+    if (T >= 0.25 && (T >= 0.5 || i % 2 === 0)) Music.tone(root + 24 + [0, ch[1] ? 4 : 3, 7, 12][(i >> (T >= 0.5 ? 0 : 1)) % 4], t, sec * 0.8, 'square', 0.026);
+    // melodía
+    const lv = Music.LEAD[s % 64];
+    if (lv) { let n = 1; while (n < 4 && !Music.LEAD[(s + n) % 64] && n < 8) n++; Music.tone(lv + (T > 0.8 ? 12 : 0), t, sec * n * 0.92, 'square', 0.05); }
+    // percusión
+    if (T >= 0.2 && (i % 8 === 0 || (T >= 0.6 && i % 4 === 0))) Music.kick(t, 0.13);
+    if (T >= 0.4 && (T >= 0.75 || i % 2 === 1)) Music.hat(t, 0.025 + 0.03 * T);
+    // alarma en los últimos instantes
+    if (T >= 0.88 && i % 4 === 0) Music.tone(i % 8 === 0 ? 96 : 93, t, sec * 1.4, 'square', 0.03);
+  },
+  sched() {
+    const c = Sound.ctx; if (!c || !Music.tmr) return;
+    if (Music.nextT < c.currentTime - 0.5) Music.nextT = c.currentTime + 0.05;
+    while (Music.nextT < c.currentTime + 0.15) {
+      Music.playStep(Music.step, Music.nextT);
+      Music.nextT += 60 / Music.bpmNow() / 4; Music.step = (Music.step + 1) % 64;
+    }
+  },
+  play() {
+    if (!Music.on) return;
+    if (Music.tmr) return;
+    const c = Music.ctx(); if (!c) return;
+    Music.master = c.createGain(); Music.master.gain.value = 0.6; Music.master.connect(c.destination);
+    Music.step = 0; Music.nextT = c.currentTime + 0.05; Music.tension = 0;
+    Music.tmr = setInterval(Music.sched, 25);
+  },
+  duck(on) { try { if (Music.master) Music.master.gain.setTargetAtTime(on ? 0.12 : 0.6, Sound.ctx.currentTime, 0.05); } catch (e) { /* sin audio */ } },
+  setTension(f) { Music.tension = Math.max(0, Math.min(1, f)); },
+  stop() {
+    if (!Music.tmr) return;
+    clearInterval(Music.tmr); Music.tmr = null;
+    const m = Music.master, c = Sound.ctx; Music.master = null;
+    try { m.gain.setTargetAtTime(0, c.currentTime, 0.04); setTimeout(() => { try { m.disconnect(); } catch (e) { /* ya cerrado */ } }, 400); } catch (e) { /* sin audio */ }
+  }
+};
+
+/* ============================ MODULE: Store ========================= */
+/* Interfaz que debe respetar cualquier almacenamiento (LocalStore hoy, ApiStore mañana):
+   students() · student(key) · upsertStudent(s) · addRecord(r) · records(filter)
+   exportAll() · importAll(obj) · clearAll() · persistent                           */
+class LocalStore {
+  constructor(ns) {
+    this.ns = ns || 'fraclab.v1';   // mismo espacio que v0.1: conserva el progreso anterior
+    this.mem = {};
+    this.persistent = (() => { try { localStorage.setItem('__t', '1'); localStorage.removeItem('__t'); return true; } catch (e) { return false; } })();
+    this.data = this._read('data', {students: {}, records: []});
+  }
+  _read(k, def) {
+    try { const raw = this.persistent ? localStorage.getItem(this.ns + '.' + k) : this.mem[k]; return raw ? JSON.parse(raw) : def; } catch (e) { return def; }
+  }
+  _save() {
+    const raw = JSON.stringify(this.data);
+    try { if (this.persistent) localStorage.setItem(this.ns + '.data', raw); else this.mem.data = raw; this.savedAt = Date.now(); } catch (e) { this.persistent = false; this.mem.data = raw; }
+  }
+  students() { return Object.values(this.data.students); }
+  student(key) { return this.data.students[key] || null; }
+  upsertStudent(s) { this.data.students[s.key] = Object.assign(this.data.students[s.key] || {}, s); this._save(); }
+  upsertMany(arr) { arr.forEach(s => { this.data.students[s.key] = Object.assign(this.data.students[s.key] || {}, s); }); this._save(); }
+  removeStudent(key) { delete this.data.students[key]; this.data.records = this.data.records.filter(r => r.sk !== key); this._save(); }
+  roster(group) { return this.students().filter(s => s.group === group && s.name); }
+  addRecord(r) {
+    r.id = r.id || (r.sk + '|' + r.ts + '|' + Math.random().toString(36).slice(2, 7));
+    this.data.records.push(r);
+    if (this.data.records.length > 20000) this.data.records.splice(0, this.data.records.length - 20000);
+    this._save();
+  }
+  records(filter) { return filter ? this.data.records.filter(filter) : this.data.records; }
+  exportAll() { return {app: 'fraclab', version: Config.VERSION, exportedAt: new Date().toISOString(), students: this.students(), records: this.data.records}; }
+  importAll(obj) {
+    if (!obj || obj.app !== 'fraclab') throw new Error('Archivo no válido');
+    const have = new Set(this.data.records.map(r => r.id));
+    let added = 0;
+    (obj.records || []).forEach(r => { if (r.id && !have.has(r.id)) { this.data.records.push(r); have.add(r.id); added++; } });
+    (obj.students || []).forEach(s => {
+      const cur = this.data.students[s.key];
+      if (!cur) this.data.students[s.key] = s;
+      else { if (!cur.name && s.name) cur.name = s.name; cur.points = Math.max(cur.points || 0, s.points || 0); cur.bestStreak = Math.max(cur.bestStreak || 0, s.bestStreak || 0); cur.lastSeen = Math.max(cur.lastSeen || 0, s.lastSeen || 0); }
+    });
+    this._save();
+    return added;
+  }
+  clearAll() { this.data = {students: {}, records: []}; this._save(); }
+}
+
+/* ============================ MODULE: Cloud ========================= */
+/* Conexión con Supabase por HTTP (sin librerías).
+   · Alumnos (sin cuenta): solo llaman a las funciones student_login y submit_records.
+   · Docente: inicio de sesión real (Supabase Auth); las tablas solo le responden a él (RLS).
+   · Sin internet: los intentos se guardan en el equipo (cola) y se envían al volver la conexión. */
+const Cloud = {
+  T: null,            // sesión del docente {jwt, refresh, email}
+  st: null,           // estado local: sesiones, cola de envío, códigos conocidos
+  busy: false, timer: null,
+  get on() { return !!(Config.CLOUD && Config.CLOUD.url && Config.CLOUD.key); },
+  LS: 'fraclab.v1.cloud',
+  init() {
+    try { this.st = JSON.parse(localStorage.getItem(this.LS)) || {}; } catch (e) { this.st = {}; }
+    ['sess', 'cred', 'chk', 'codes'].forEach(k => { this.st[k] = this.st[k] || {}; });
+    ['outbox', 'rejected'].forEach(k => { this.st[k] = this.st[k] || []; });
+    try { this.T = JSON.parse(sessionStorage.getItem('fraclab.t')) || null; } catch (e) { this.T = null; }
+    if (!this.on || typeof window === 'undefined') return;
+    window.addEventListener('online', () => { this.paint(); this.later(500); });
+    window.addEventListener('offline', () => this.paint());
+    setInterval(() => { if (this.st.outbox.length) this.sync(); }, 60000);
+    this.later(1500);
+  },
+  save() { try { localStorage.setItem(this.LS, JSON.stringify(this.st)); } catch (e) { /* sin almacenamiento: queda en memoria */ } this.paint(); },
+  // Huella local del NIP (solo para entrar sin internet en este equipo)
+  hash(key, pin) {
+    const s = 'fl|' + key + '|' + pin; let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+    for (let i = 0, c; i < s.length; i++) { c = s.charCodeAt(i); h1 = Math.imul(h1 ^ c, 2654435761); h2 = Math.imul(h2 ^ c, 1597334677); }
+    h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+    h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+    return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36);
+  },
+  async http(method, path, body, opt) {
+    opt = opt || {};
+    const ctl = new AbortController(), tm = setTimeout(() => ctl.abort(), opt.timeout || 12000);
+    const h = {apikey: Config.CLOUD.key, 'Content-Type': 'application/json'};
+    if (opt.jwt) h.Authorization = 'Bearer ' + opt.jwt;
+    if (opt.prefer) h.Prefer = opt.prefer;
+    let r;
+    try {
+      r = await fetch(Config.CLOUD.url.replace(/\/$/, '') + path, {method, headers: h, body: body == null ? undefined : JSON.stringify(body), signal: ctl.signal});
+    } catch (e) { const er = new Error('offline'); er.offline = true; throw er; } finally { clearTimeout(tm); }
+    const txt = await r.text(); let data = null;
+    try { data = txt ? JSON.parse(txt) : null; } catch (e) { data = null; }
+    return {ok: r.ok, status: r.status, data};
+  },
+  rpc(fn, args, opt) { return this.http('POST', '/rest/v1/rpc/' + fn, args, opt); },
+
+  /* ---- Alumno ---- */
+  async login(code, num, pin, create) {
+    const r = await this.rpc('student_login', {p_code: code, p_num: num, p_pin: pin, p_create: !!create});
+    if (!r.ok || !r.data) { const e = new Error('server'); e.http = r.status; throw e; }
+    return r.data;
+  },
+  enqueue(r) {
+    const o = this.st.outbox; o.push(Object.assign({}, r, {cid: String(r.id).slice(0, 40)}));
+    if (o.length > 5000) o.splice(0, o.length - 5000);
+    this.save(); this.later(1500);
+  },
+  later(ms) { clearTimeout(this.timer); this.timer = setTimeout(() => this.sync(), ms); },
+  reject(key) {
+    const mine = this.st.outbox.filter(r => r.sk === key);
+    this.st.rejected = this.st.rejected.concat(mine).slice(-500);
+    this.st.outbox = this.st.outbox.filter(r => r.sk !== key);
+    delete this.st.cred[key]; delete this.st.chk[key]; delete this.st.sess[key]; this.save();
+  },
+  async sync() {
+    if (!this.on || this.busy || !this.st.outbox.length) { this.paint(); return; }
+    this.busy = true; this.paint();
+    try {
+      const keys = [...new Set(this.st.outbox.map(r => r.sk))]; this.down = false;
+      for (const key of keys) {
+        let s = this.st.sess[key];
+        if ((!s || !s.tok) && this.st.cred[key]) {      // alumno que entró sin internet: se confirma ahora
+          const c = this.st.cred[key], r = await this.login(c.code, +key.split('-').pop(), c.pin, true);
+          if (r.status === 'ok') { this.st.sess[key] = s = {tok: r.token, code: c.code}; delete this.st.cred[key]; this.save(); }
+          else if (r.status === 'bad_pin' || r.status === 'locked' || r.status === 'bad_code' || r.status === 'bad_num') { this.reject(key); continue; }
+          else continue;
+        }
+        if (!s || !s.tok) continue;                     // se reanuda cuando el alumno vuelva a entrar
+        for (;;) {
+          const batch = this.st.outbox.filter(r => r.sk === key).slice(0, 100);
+          if (!batch.length) break;
+          const u = (App.studentStore && App.studentStore.student(key)) || {};
+          const r = await this.rpc('submit_records', {p_token: s.tok, p_points: u.points || 0, p_best: u.bestStreak || 0, p_records: batch});
+          if (r.ok && r.data && r.data.status === 'ok') {
+            const done = new Set(batch.map(x => x.cid));
+            this.st.outbox = this.st.outbox.filter(x => !(x.sk === key && done.has(x.cid))); this.save();
+          } else if (r.data && r.data.status === 'bad_token') { delete s.tok; this.save(); break; }
+          else if (r.data && r.data.status === 'bad_batch') { this.reject(key); break; }
+          else break;                                   // error del servidor: se reintenta luego
+        }
+      }
+    } catch (e) { this.down = !!e.offline; }
+    this.busy = false; this.paint();
+  },
+  paint() {
+    if (!this.on || typeof document === 'undefined' || !this.st) return;
+    let el = document.getElementById('cloudst');
+    const n = this.st.outbox.length;
+    if (!((App.user && !App.demo) || n)) { if (el) el.remove(); return; }
+    if (!el) { el = document.createElement('div'); el.id = 'cloudst'; document.body.appendChild(el); }
+    const off = this.down || (typeof navigator !== 'undefined' && navigator.onLine === false);
+    el.className = n ? 'warn' : '';
+    el.textContent = this.busy ? '☁️ Enviando…' : n ? (off ? '📴 Sin internet · ' : '⏳ ') + n + ' pendiente' + (n > 1 ? 's' : '') + ' de enviar' : '☁️ Guardado en la nube';
+  },
+
+  /* ---- Docente ---- */
+  setT(d, email) {
+    this.T = {jwt: d.access_token, refresh: d.refresh_token, email: email || (d.user && d.user.email) || (this.T || {}).email || ''};
+    try { sessionStorage.setItem('fraclab.t', JSON.stringify(this.T)); } catch (e) { /* ignorar */ }
+  },
+  tClear() { this.T = null; try { sessionStorage.removeItem('fraclab.t'); } catch (e) { /* ignorar */ } },
+  async tLogin(email, pass) {
+    const r = await this.http('POST', '/auth/v1/token?grant_type=password', {email, password: pass});
+    if (!r.ok) return {ok: false, msg: r.status === 400 || r.status === 401 ? 'Correo o contraseña incorrectos.' : 'El servidor respondió con error (' + r.status + ').'};
+    this.setT(r.data, email);
+    const t = await this.tReq('POST', '/rest/v1/rpc/is_teacher', {});
+    if (!t.ok || t.data !== true) { this.tClear(); return {ok: false, msg: 'Esta cuenta no está registrada como docente.'}; }
+    return {ok: true};
+  },
+  async tRefresh() {
+    if (!this.T || !this.T.refresh) return false;
+    const r = await this.http('POST', '/auth/v1/token?grant_type=refresh_token', {refresh_token: this.T.refresh});
+    if (!r.ok) { this.tClear(); return false; }
+    this.setT(r.data); return true;
+  },
+  async tReq(method, path, body, prefer) {
+    const authErr = () => Object.assign(new Error('auth'), {auth: true});
+    if (!this.T) throw authErr();
+    let r = await this.http(method, path, body, {jwt: this.T.jwt, prefer});
+    if (r.status === 401) { if (await this.tRefresh()) r = await this.http(method, path, body, {jwt: this.T.jwt, prefer}); else throw authErr(); }
+    return r;
+  },
+  async page(base) {
+    let out = [], off = 0;
+    for (;;) {
+      const r = await this.tReq('GET', base + '&limit=1000&offset=' + off);
+      if (!r.ok || !Array.isArray(r.data)) { const e = new Error('http'); e.http = r.status; throw e; }
+      out = out.concat(r.data); if (r.data.length < 1000) break; off += 1000;
+    }
+    return out;
+  },
+  async loadTeacher() {
+    const groups = await this.page('/rest/v1/groups?select=code,name,active,created_at&order=name');
+    const students = await this.page('/rest/v1/students?select=id,group_name,num,has_pin,failed,locked_until,points,best_streak,created_at,last_seen&order=id');
+    const records = await this.page('/rest/v1/records?select=id,student_id,client_id,ts,skill,lvl,ok,ms,err,data&order=id');
+    return {groups, students, records};
+  }
+};
+
+/* Almacenamiento de un alumno en su equipo + envío a la nube (misma interfaz que LocalStore) */
+class ApiStore extends LocalStore {
+  addRecord(r) { super.addRecord(r); Cloud.enqueue(r); }
+}
+
+/* Datos del docente: vienen de la nube (solo lectura); únicamente los NOMBRES se guardan en este equipo */
+class TeacherStore extends LocalStore {
+  constructor(d) {
+    super('fraclab.v1');
+    this.cloud = true; this.persistent = true; this.groups = d.groups;
+    this.names = this._read('names', {});
+    const st = {}, byId = {};
+    d.students.forEach(s => {
+      const key = s.group_name + '-' + s.num; byId[s.id] = key;
+      st[key] = {key, group: s.group_name, id: s.num, dbId: s.id, hasPin: s.has_pin, lockedUntil: s.locked_until ? Date.parse(s.locked_until) : 0,
+                 points: s.points, bestStreak: s.best_streak, created: Date.parse(s.created_at), lastSeen: s.last_seen ? Date.parse(s.last_seen) : 0};
+    });
+    Object.keys(this.names).forEach(k => {
+      const m = /^(.+)-(\d+)$/.exec(k);
+      if (!st[k] && m) st[k] = {key: k, group: m[1], id: +m[2], dbId: null, points: 0, bestStreak: 0, created: 0, lastSeen: 0};
+      if (st[k]) st[k].name = this.names[k];
+    });
+    this.data = {students: st, records: []};
+    d.records.forEach(r => {
+      const key = byId[r.student_id], s = st[key]; if (!s) return;
+      this.data.records.push(Object.assign({}, r.data, {id: r.client_id, sk: key, g: s.group, st: s.id, ts: Date.parse(r.ts), skill: r.skill, lvl: r.lvl, ok: r.ok, ms: r.ms}));
+    });
+  }
+  _save() { try { localStorage.setItem(this.ns + '.names', JSON.stringify(this.names)); } catch (e) { /* sin almacenamiento */ } this.savedAt = Date.now(); }
+  _merge(s) {
+    if (s.name !== undefined) { if (s.name) this.names[s.key] = s.name; else delete this.names[s.key]; }
+    this.data.students[s.key] = Object.assign(this.data.students[s.key] || {dbId: null, points: 0, bestStreak: 0, created: 0, lastSeen: 0}, s);
+  }
+  upsertStudent(s) { this._merge(s); this._save(); }
+  upsertMany(arr) { arr.forEach(s => this._merge(s)); this._save(); }
+  removeStudent(key) { delete this.names[key]; delete this.data.students[key]; this.data.records = this.data.records.filter(r => r.sk !== key); this._save(); }
+  importAll() { throw new Error('No disponible con la nube'); }
+  clearAll() { /* los datos de la nube no se borran desde aquí */ }
+}
+
+/* ============================ MODULE: Analytics ===================== */
+const Analytics = {
+  group(records, keyFn) {
+    const out = {};
+    records.forEach(r => {
+      const k = keyFn(r), s = out[k] = out[k] || {a: 0, c: 0, ms: 0};
+      s.a++; if (r.ok) s.c++; s.ms += r.ms || 0;
+    });
+    Object.values(out).forEach(s => { s.acc = s.a ? s.c / s.a : 0; s.avgMs = s.a ? s.ms / s.a : 0; });
+    return out;
+  },
+  bySkill(records) { return Analytics.group(records, r => r.skill); },
+  byDenominator(records) { return Analytics.group(records.filter(r => r.d != null), r => r.d); },
+  byShape(records) { return Analytics.group(records.filter(r => r.shape), r => r.shape); },
+  byLevel(records) { return Analytics.group(records, r => r.lvl || 1); },
+  summary(records) {
+    const a = records.length, c = records.filter(r => r.ok).length;
+    return {a, c, acc: a ? c / a : 0, avgMs: a ? records.reduce((t, r) => t + (r.ms || 0), 0) / a : 0,
+            timeouts: records.filter(r => r.to).length, rounds: new Set(records.filter(r => r.rd).map(r => r.rd)).size};
+  },
+  errorTypes(records) {
+    const out = {};
+    records.forEach(r => {
+      if (r.errs) Object.keys(r.errs).forEach(k => { out[k] = (out[k] || 0) + r.errs[k]; });
+      else if (!r.ok && r.err) out[r.err] = (out[r.err] || 0) + 1;
+    });
+    return out;
+  },
+  alerts(records, now) {
+    const R = Config.ALERTS, al = [];
+    now = now || Date.now();
+    if (!records.length) return al;
+    const sorted = records.slice().sort((a, b) => a.ts - b.ts);
+    const sk = Analytics.bySkill(sorted);
+    Object.keys(sk).forEach(k => {
+      const s = sk[k];
+      if (s.a >= R.minAttempts && s.acc < R.lowAcc)
+        al.push({level: s.acc < R.critAcc ? 'high' : 'med', code: 'LOW_ACC',
+                 text: 'Aciertos bajos en «' + Config.SKILLS[k].name + '» (' + Math.round(s.acc * 100) + '% en ' + s.a + ' intentos)'});
+    });
+    const recent = sorted.slice(-R.window);
+    const errByD = {};
+    recent.forEach(r => { if (!r.ok && !r.to && r.d != null) errByD[r.d] = (errByD[r.d] || 0) + 1; });
+    Object.keys(errByD).forEach(d => {
+      if (errByD[d] >= R.denomErrors) al.push({level: 'med', code: 'DENOM', text: 'Dificultad con denominador ' + d + ' (' + errByD[d] + ' errores recientes)'});
+    });
+    const fast = recent.filter(r => r.ms < R.fastMs);
+    if (fast.length >= R.fastCount && fast.filter(r => r.ok).length / fast.length < R.fastAcc)
+      al.push({level: 'med', code: 'FAST', text: 'Responde muy rápido y falla (posible adivinanza)'});
+    const to = recent.filter(r => r.to).length;
+    if (to >= R.timeouts) al.push({level: 'med', code: 'TIMEOUT', text: 'Se le acaba el tiempo con frecuencia (' + to + ' de las últimas ' + recent.length + ')'});
+    const days = (now - sorted[sorted.length - 1].ts) / 86400000;
+    if (days >= R.inactiveDays) al.push({level: 'med', code: 'INACTIVE', text: 'Sin actividad hace ' + Math.floor(days) + ' días'});
+    return al;
+  }
+};
+
+/* ============================ MODULE: UI ============================ */
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
+const frac = (n, d, cls) => '<span class="frac ' + (cls || '') + '"><span class="n">' + n + '</span><span class="d">' + d + '</span></span>';
+const fracMixed = (w, n, d, cls) => (w > 0 ? '<span class="mixw ' + (cls || '') + '">' + w + '</span>' : '') + (n > 0 || w === 0 ? frac(n, d, cls) : '');
+const pct = x => Math.round(x * 100) + '%';
+const secs = ms => (ms / 1000).toFixed(1) + ' s';
+const fmtDate = ts => ts ? new Date(ts).toLocaleDateString('es-MX', {day: '2-digit', month: 'short'}) : '—';
+const shapeName = k => (Config.SHAPES[k] ? Config.SHAPES[k].icon + ' ' + Config.SHAPES[k].name : k);
+
+const Prefs = {
+  get(k, def) { try { const v = localStorage.getItem('fraclab.pref.' + k); return v === null ? def : JSON.parse(v); } catch (e) { return def; } },
+  set(k, v) { try { localStorage.setItem('fraclab.pref.' + k, JSON.stringify(v)); } catch (e) { /* ignorar */ } }
+};
+
+const App = {store: null, user: null, game: null, keys: null, level: 1, timerOn: true, tick: null, cls: null};
+
+/* Pausa el reloj (y la medición de tiempo de respuesta) mientras una alerta grande está abierta */
+function holdTimer(G) { if (G.holdAt) return; G.holdAt = performance.now(); if (App.tick) { clearInterval(App.tick); App.tick = null; G.held = true; } }
+function resumeTimer(G) {
+  if (!G.holdAt) return; const d = performance.now() - G.holdAt; G.holdAt = 0; G.t0 += d;
+  if (G.held) { G.held = false; if (!G.locked) { G.deadline += d; tickLoop(G); } }
+}
+function stopTimer() { if (App.tick) { clearInterval(App.tick); App.tick = null; } }
+function mount(html, wide, keepMusic) {
+  stopTimer(); if (!keepMusic) Music.stop();
+  const el = document.getElementById('app');
+  el.className = wide ? 'wide' : '';
+  el.innerHTML = html; window.scrollTo(0, 0);
+  demoTools();
+  if (Cloud.on) Cloud.paint();
+}
+function exitGame() { App.inGame = false; if (App.demo) viewDemo(); else viewMenu(); }
+function demoCfg() {
+  const el = document.getElementById('app'), G = App.game, sk = G.skill;
+  let box = document.getElementById('democfg'); if (box) box.remove();
+  if (!['mcm', 'simplify', 'addsub_unlike'].includes(sk)) return;
+  App.cfg = App.cfg || {};
+  const C = App.cfg[sk] = App.cfg[sk] || (sk === 'mcm' ? ['', '', '', '', ''] : sk === 'simplify' ? [{w: '', n: '', d: ''}] : [{w: '', n: '', d: ''}, {w: '', n: '', d: ''}, {w: '', n: '', d: ''}]);
+  const inp = (k, i, ph, w) => '<input class="cfg" type="number" min="0" inputmode="numeric" data-k="' + k + '" data-i="' + i + '" placeholder="' + ph + '" style="width:' + w + 'px">';
+  const fracBox = (f, i) => (i ? '<span class="cplus">' + (sk === 'addsub_unlike' ? '+' : '') + '</span>' : '') +
+    '<span class="cfr">' + inp('w', i, 'ent.', 58) + '<span class="cst">' + inp('n', i, 'num.', 62) + '<i></i>' + inp('d', i, 'den.', 62) + '</span></span>';
+  const body = sk === 'mcm' ? C.map((v, i) => inp('m', i, 'n' + (i + 1), 62)).join('')
+             : C.map(fracBox).join('') + (sk === 'addsub_unlike' && C.length < 4 ? '<button class="btn" id="cadd" title="Agregar fracción">＋</button>' : '');
+  box = document.createElement('div'); box.id = 'democfg';
+  box.innerHTML = '<b>✏️ Mi ejercicio:</b>' + body + '<button class="btn primary" id="cgo">▶ Jugar</button><button class="btn" id="cclr">Limpiar</button><span class="err" id="cerr"></span>';
+  el.insertBefore(box, el.firstChild);
+  box.querySelectorAll('.cfg').forEach(i => {
+    i.value = sk === 'mcm' ? C[+i.dataset.i] : C[+i.dataset.i][i.dataset.k];
+    i.oninput = () => { if (sk === 'mcm') C[+i.dataset.i] = i.value; else C[+i.dataset.i][i.dataset.k] = i.value; };
+    i.onkeydown = e => { e.stopPropagation(); if (e.key === 'Enter') { e.preventDefault(); go(); } };
+  });
+  const rebuild = () => demoCfg();
+  const add = box.querySelector('#cadd'); if (add) add.onclick = () => { C.push({w: '', n: '', d: ''}); rebuild(); };
+  box.querySelector('#cclr').onclick = () => { App.cfg[sk] = null; rebuild(); };
+  const go = () => {
+    const err = m => (box.querySelector('#cerr').textContent = m), lv = G.level;
+    let q;
+    if (sk === 'mcm') {
+      const nums = C.map(Number).filter(n => n > 0);
+      if (nums.length < 2) return err('Escribe al menos 2 números.');
+      if (nums.length > 5 || nums.some(n => n < 2 || n > 60)) return err('Usa números del 2 al 60.');
+      q = {skill: 'mcm', level: lv, nums, mcm: MathUtil.lcmAll(nums), key: nums.join(',')};
+    } else {
+      const frs = C.map(f => ({w: +f.w || 0, n: +f.n || 0, d: +f.d || 0})).filter(f => f.w || f.n || f.d);
+      if (frs.some(f => f.n < 1 || f.d < 2)) return err('Cada fracción necesita numerador y denominador (mínimo 2).');
+      if (sk === 'simplify') {
+        if (frs.length !== 1) return err('Escribe una fracción.');
+        const f = frs[0];
+        q = Content.finishSimp({skill: 'simplify', level: lv, kind: f.w ? 'mixed' : f.n >= f.d ? 'improper' : 'simple', w: f.w, n: f.n, d: f.d, key: 'c' + Date.now()});
+      } else {
+        if (frs.length < 2) return err('Escribe al menos 2 fracciones.');
+        const sol = Content.solveAdd(frs);
+        q = {skill: 'addsub_unlike', level: lv, fr: frs, key: 'c' + Date.now(), sol, mcm: sol.mcm};
+      }
+    }
+    stopTimer(); G.qs = [q]; G.i = 0; G.custom = true; viewQuestion();
+  };
+  box.querySelector('#cgo').onclick = go;
+}
+function demoTools() {
+  if (App.demo && App.game && App.inGame) demoCfg(); else { const b = document.getElementById('democfg'); if (b) b.remove(); }
+  let t = document.getElementById('demotools');
+  const show = App.demo && App.game && App.inGame;
+  if (!show) { if (t) t.remove(); return; }
+  if (!t) {
+    t = document.createElement('div'); t.id = 'demotools'; document.body.appendChild(t);
+    t.innerHTML = '<span>👩‍🏫 Docente · no se guarda</span><button id="dzm" title="Achicar">A−</button><button id="dzp" title="Agrandar">A+</button><button id="dskip">⏭ Saltar</button>';
+    t.querySelector('#dzm').onclick = () => demoZoom(-0.1);
+    t.querySelector('#dzp').onclick = () => demoZoom(0.1);
+    t.querySelector('#dskip').onclick = () => { const G = App.game; stopTimer(); G.i++; G.i >= G.qs.length ? viewSummary() : viewQuestion(); };
+  }
+}
+function demoZoom(d) { App.zoom = Math.min(1.6, Math.max(0.8, Math.round(((App.zoom || 1) + d) * 10) / 10)); document.getElementById('app').style.zoom = App.zoom; Prefs.set('zoom', App.zoom); }
+
+function download(name, text, type) {
+  const b = new Blob([text], {type}), a = document.createElement('a');
+  a.href = URL.createObjectURL(b); a.download = name; document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+/* Guardar un archivo: descarga nativa del navegador */
+async function saveFile(name, text, type) { download(name, text, type); }
+function popup(text) { const p = document.createElement('div'); p.className = 'pop'; p.textContent = text; document.body.appendChild(p); setTimeout(() => p.remove(), 1000); }
+/* Diálogos propios: confirm/prompt/alert del navegador no funcionan dentro de un artefacto (iframe protegido) */
+function dialog(msg, o) {
+  o = o || {};
+  const m = document.createElement('div'); m.className = 'modal';
+  m.innerHTML = '<div class="box" role="dialog" aria-modal="true"><p>' + esc(msg) + '</p>' +
+    (o.input ? '<input type="password" id="dlgin" inputmode="numeric" autocomplete="off" style="margin-top:10px;text-align:center">' : '') +
+    '<div class="row">' + (o.noText === null ? '' : '<button class="btn" id="dlgno">' + esc(o.noText || 'Cancelar') + '</button>') +
+    '<button class="btn primary" id="dlgyes">' + esc(o.yesText || 'Aceptar') + '</button></div></div>';
+  document.body.appendChild(m);
+  const close = () => m.remove();
+  const yes = () => { const v = o.input ? m.querySelector('#dlgin').value : true; close(); if (o.yes) o.yes(v); };
+  m.querySelector('#dlgyes').onclick = yes;
+  const no = m.querySelector('#dlgno'); if (no) no.onclick = () => { close(); if (o.no) o.no(); };
+  m.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); yes(); } else if (e.key === 'Escape') { close(); if (o.no) o.no(); } });
+  (m.querySelector('#dlgin') || m.querySelector('#dlgyes')).focus();
+}
+/* Alerta grande al centro de la pantalla: no se puede pasar por alto. {kind:'bad'|'win', icon, title, html, btn, lock, onClose} */
+function bigAlert(o) {
+  const G = App.game; if (G) holdTimer(G);
+  Music.duck(true);
+  const m = document.createElement('div'); m.className = 'modal alert'; m.tabIndex = -1;
+  m.innerHTML = '<div class="box alertbox ' + o.kind + '" role="alertdialog" aria-modal="true" aria-live="assertive"><div class="aicon">' + o.icon + '</div><h2>' + o.title + '</h2>' +
+    '<div class="abody">' + o.html + '</div><div class="row"><button class="btn primary big" id="abtn" disabled>' + o.btn + '</button></div></div>';
+  document.body.appendChild(m); m.focus();
+  const btn = m.querySelector('#abtn');
+  const close = () => { m.remove(); Music.duck(false); if (G) resumeTimer(G); if (o.onClose) o.onClose(); };
+  btn.onclick = close;
+  m.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') { e.preventDefault(); if (!btn.disabled) close(); } });
+  setTimeout(() => { btn.disabled = false; btn.focus(); }, o.lock || 0);
+}
+const askConfirm = (msg, yes, yesText) => dialog(msg, {yes, yesText: yesText || 'Sí'});
+const notice = msg => dialog(msg, {noText: null});
+function askPin(cb) { if (!Config.TEACHER_PIN) return cb(); dialog('PIN docente', {input: true, yes: v => { if (v === Config.TEACHER_PIN) cb(); else notice('PIN incorrecto.'); }}); }
+
+/* ---------- Acceso ---------- */
+/* ---------- Nube: acceso de alumnos (código + lista + NIP) y del docente ---------- */
+const PIN_CSS = 'width:100%;font-size:26px;letter-spacing:10px;text-align:center;padding:10px 12px;border:2px solid var(--line);border-radius:12px;background:#fff;color:var(--ink)';
+function viewLoginCloud() {
+  App.keys = null;
+  mount('<div class="card center">' +
+    '<h1 class="logo">Frac<span>Lab</span></h1><p class="muted">Aprende fracciones jugando</p>' +
+    '<label for="code">Código de tu grupo</label><input type="text" id="code" maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false" style="text-transform:uppercase;letter-spacing:4px;text-align:center" value="' + esc(Prefs.get('lastCode', '')) + '" placeholder="Te lo da tu maestro">' +
+    '<label for="num">Número de lista</label><input type="number" id="num" min="1" max="99" inputmode="numeric">' +
+    '<label for="pin">NIP (4 números)</label><input type="password" id="pin" maxlength="4" inputmode="numeric" autocomplete="off" style="' + PIN_CSS + '">' +
+    '<div id="pin2wrap" class="hidden"><label for="pin2">Repite tu NIP</label><input type="password" id="pin2" maxlength="4" inputmode="numeric" autocomplete="off" style="' + PIN_CSS + '"></div>' +
+    '<div class="err" id="err"></div>' +
+    '<button class="btn primary big" id="go">Entrar a jugar</button>' +
+    '<div><button class="link" id="clase">Modo docente (jugar como alumnos)</button><button class="link" id="teacher">Zona docente</button></div></div>');
+  const $ = id => document.getElementById(id);
+  let phase = 'normal';
+  const err = (m, info) => { $('err').textContent = m || ''; $('err').style.color = info ? 'var(--primary-d)' : ''; };
+  const askCreate = m => { phase = 'create'; $('pin2wrap').classList.remove('hidden'); $('pin2').value = ''; $('pin2').focus(); err(m, true); };
+  const enter = (r, code, pin) => {
+    const key = r.group + '-' + r.num, S = Cloud.st;
+    S.sess[key] = {tok: r.token, code}; S.codes[code] = r.group; S.chk[key] = Cloud.hash(key, pin); delete S.cred[key]; Cloud.save();
+    const cur = App.store.student(key) || {key, group: r.group, id: r.num, points: 0, bestStreak: 0, created: Date.now()};
+    cur.points = Math.max(cur.points || 0, r.points || 0); cur.bestStreak = Math.max(cur.bestStreak || 0, r.best_streak || 0); cur.lastSeen = Date.now();
+    App.store.upsertStudent(cur); Prefs.set('lastCode', code);
+    App.user = cur; Cloud.later(300); viewMenu();
+  };
+  const offline = (code, num, pin) => {
+    const group = Cloud.st.codes[code];
+    if (!group) return err('Sin internet. La primera vez en este equipo necesitas conexión para reconocer tu grupo.');
+    const key = group + '-' + num, chk = Cloud.st.chk[key], h = Cloud.hash(key, pin);
+    if (chk) { if (chk !== h) return err('NIP incorrecto.'); }
+    else {
+      if (phase !== 'create') return askCreate('Sin internet. Escribe tu NIP otra vez; se confirmará cuando haya conexión.');
+      if ($('pin2').value !== pin) return err('Los dos NIP no coinciden.');
+      Cloud.st.cred[key] = {code, pin}; Cloud.st.chk[key] = h; Cloud.save();
+    }
+    const cur = App.store.student(key) || {key, group, id: num, points: 0, bestStreak: 0, created: Date.now()};
+    cur.lastSeen = Date.now(); App.store.upsertStudent(cur); Prefs.set('lastCode', code);
+    App.user = cur; viewMenu();
+  };
+  const go = async () => {
+    err('');
+    const code = ($('code').value || '').trim().toUpperCase(), num = parseInt($('num').value, 10), pin = $('pin').value.trim();
+    if (code.length < 4) return err('Escribe el código de tu grupo.');
+    if (!(num >= 1 && num <= 99)) return err('Escribe tu número de lista (1 a 99).');
+    if (!/^\d{4}$/.test(pin)) return err('Tu NIP son 4 números.');
+    if (phase === 'create' && $('pin2').value !== pin) return err('Los dos NIP no coinciden. Inténtalo de nuevo.');
+    $('go').disabled = true; $('go').textContent = 'Entrando…';
+    let r = null, down = false;
+    try { r = await Cloud.login(code, num, pin, phase === 'create'); } catch (e) { if (e.offline) down = true; else r = {status: 'server', http: e.http}; }
+    $('go').disabled = false; $('go').textContent = 'Entrar a jugar';
+    if (down) return offline(code, num, pin);
+    switch (r.status) {
+      case 'ok': return enter(r, code, pin);
+      case 'new': return askCreate('Es tu primera vez: crea tu NIP escribiéndolo otra vez abajo. Anótalo para no olvidarlo.');
+      case 'bad_code': return err('Ese código de grupo no existe o está desactivado. Pídelo a tu maestro.');
+      case 'bad_num': return err('Número de lista no válido.');
+      case 'bad_pin_format': return err('Tu NIP son 4 números.');
+      case 'bad_pin': return err('NIP incorrecto. Te quedan ' + r.left + ' intento' + (r.left === 1 ? '' : 's') + '.');
+      case 'locked': return err('Demasiados intentos. Espera ' + Math.ceil(r.seconds / 60) + ' minuto(s) o pide a tu maestro que reinicie tu NIP.');
+      default: return err('El servidor no respondió bien. Intenta de nuevo en un momento.');
+    }
+  };
+  $('go').onclick = go;
+  ['code', 'num', 'pin', 'pin2'].forEach(id => $(id).addEventListener('keydown', e => { if (e.key === 'Enter') go(); }));
+  $('pin').addEventListener('input', () => { $('pin').value = $('pin').value.replace(/\D/g, ''); });
+  $('pin2').addEventListener('input', () => { $('pin2').value = $('pin2').value.replace(/\D/g, ''); });
+  $('teacher').onclick = () => Cloud.gate(enterTeacher);
+  $('clase').onclick = () => Cloud.gate(viewDemo);
+}
+Cloud.gate = function (next) { return Cloud.on ? (Cloud.T ? next() : viewTeacherLogin(next)) : askPin(next); };
+function openTeacher() { return Cloud.on ? enterTeacher() : viewTeacher(); }
+
+function viewTeacherLogin(next) {
+  App.keys = null;
+  mount('<div class="card center"><h2>Acceso docente</h2><p class="muted">Inicia sesión con tu cuenta de docente.</p>' +
+    '<label for="tem">Correo</label><input type="text" id="tem" autocomplete="username" inputmode="email" autocapitalize="off" spellcheck="false">' +
+    '<label for="tpw">Contraseña</label><input type="password" id="tpw" autocomplete="current-password" style="width:100%;font-size:20px;padding:10px 12px;border:2px solid var(--line);border-radius:12px;background:#fff;color:var(--ink)">' +
+    '<div class="err" id="terr"></div><button class="btn primary big" id="tgo">Entrar</button><button class="btn big" id="tback">← Volver</button></div>');
+  const $ = id => document.getElementById(id);
+  const go = async () => {
+    const em = $('tem').value.trim(), pw = $('tpw').value;
+    if (!em || !pw) return ($('terr').textContent = 'Escribe tu correo y contraseña.');
+    $('tgo').disabled = true; $('tgo').textContent = 'Entrando…'; $('terr').textContent = '';
+    let r;
+    try { r = await Cloud.tLogin(em, pw); } catch (e) { r = {ok: false, msg: e.offline ? 'Sin internet. Revisa tu conexión.' : 'No se pudo iniciar sesión.'}; }
+    $('tgo').disabled = false; $('tgo').textContent = 'Entrar';
+    if (!r.ok) return ($('terr').textContent = r.msg);
+    next();
+  };
+  $('tgo').onclick = go;
+  ['tem', 'tpw'].forEach(id => $(id).addEventListener('keydown', e => { if (e.key === 'Enter') go(); }));
+  $('tback').onclick = viewLogin;
+  $('tem').focus();
+}
+
+async function enterTeacher() {
+  App.keys = null;
+  mount('<div class="card center"><h2>Cargando datos…</h2><p class="muted">Descargando resultados de la nube.</p></div>');
+  try {
+    const d = await Cloud.loadTeacher();
+    App.store = new TeacherStore(d);
+    viewTeacher();
+  } catch (e) {
+    if (e.auth) return viewTeacherLogin(enterTeacher);
+    mount('<div class="card center"><h2>No se pudieron cargar los datos</h2><p class="muted">' + (e.offline ? 'Sin internet. Revisa tu conexión.' : 'Error del servidor' + (e.http ? ' (' + e.http + ')' : '') + '.') + '</p>' +
+      '<button class="btn primary big" id="retry">Reintentar</button><button class="btn big" id="tback">← Volver</button></div>');
+    document.getElementById('retry').onclick = enterTeacher;
+    document.getElementById('tback').onclick = viewLogin;
+  }
+}
+
+function groupsCard() {
+  const gs = App.store.groups || [];
+  return '<div class="card"><h3>🔑 Códigos de grupo</h3><p class="muted small" style="max-width:none">Reparte a cada grupo su código. Los alumnos entran con <b>código + número de lista + NIP</b>. ' +
+    'Si un código se filtra, pulsa <b>Cambiar código</b>: el anterior deja de servir (los alumnos que ya entraron siguen guardando).</p>' +
+    '<div class="scroll"><table><thead><tr><th>Grupo</th><th>Código</th><th>Estado</th><th></th></tr></thead><tbody>' +
+    (gs.map(g => '<tr><td><b>' + esc(g.name) + '</b></td><td style="font-family:monospace;font-size:22px;letter-spacing:3px">' + esc(g.code) + '</td><td>' + (g.active ? '✅ Activo' : '⛔ Desactivado') + '</td>' +
+      '<td><button class="btn sm gcopy" data-c="' + esc(g.code) + '">Copiar código</button> <button class="btn sm gnewc" data-n="' + esc(g.name) + '">Cambiar código</button> <button class="btn sm gtog" data-n="' + esc(g.name) + '" data-a="' + (g.active ? 0 : 1) + '">' + (g.active ? 'Desactivar' : 'Activar') + '</button></td></tr>').join('') ||
+      '<tr><td colspan="4" class="muted">Sin grupos todavía.</td></tr>') + '</tbody></table></div>' +
+    '<div class="row left" style="margin-top:10px"><input type="text" id="gnew" maxlength="8" placeholder="Nuevo grupo (ej. 2A)" style="width:210px"><button class="btn" id="gadd">Agregar grupo</button></div><div class="err" id="gerr"></div></div>';
+}
+function bindGroupsCard() {
+  const $ = id => document.getElementById(id);
+  document.querySelectorAll('.gcopy').forEach(b => b.onclick = () => {
+    const c = b.dataset.c;
+    const ok = () => { b.textContent = '¡Copiado!'; setTimeout(() => { b.textContent = 'Copiar código'; }, 1200); };
+    try { navigator.clipboard.writeText(c).then(ok, () => notice('Código: ' + c)); } catch (e) { notice('Código: ' + c); }
+  });
+  document.querySelectorAll('.gtog').forEach(b => b.onclick = async () => {
+    const r = await Cloud.tReq('PATCH', '/rest/v1/groups?name=eq.' + encodeURIComponent(b.dataset.n), {active: b.dataset.a === '1'}).catch(e => ({ok: false}));
+    r.ok ? enterTeacher() : notice('No se pudo cambiar el estado.');
+  });
+  document.querySelectorAll('.gnewc').forEach(b => b.onclick = () => askConfirm('¿Cambiar el código de ' + b.dataset.n + '? El código actual dejará de funcionar.', async () => {
+    const al = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789', rb = crypto.getRandomValues(new Uint8Array(6)); let c = '';
+    rb.forEach(x => { c += al[x % al.length]; });
+    const r = await Cloud.tReq('PATCH', '/rest/v1/groups?name=eq.' + encodeURIComponent(b.dataset.n), {code: c}).catch(e => ({ok: false}));
+    r.ok ? enterTeacher() : notice('No se pudo cambiar el código.');
+  }, 'Sí, cambiar'));
+  $('gadd').onclick = async () => {
+    const name = normGroup($('gnew').value);
+    if (!name) return ($('gerr').textContent = 'Escribe el nombre del grupo.');
+    const r = await Cloud.tReq('POST', '/rest/v1/groups', {name}).catch(e => ({ok: false}));
+    if (r.ok) enterTeacher(); else $('gerr').textContent = r.status === 409 ? 'Ese grupo ya existe.' : 'No se pudo agregar el grupo.';
+  };
+}
+
+/* Resumen por grupo: promedio, temas donde más fallan, quién no ha practicado */
+function groupSummary(sel) {
+  const all = App.store.students(), recsAll = App.store.records(), by = {};
+  recsAll.forEach(r => { (by[r.sk] = by[r.sk] || []).push(r); });
+  const now = Date.now(), WEEK = 7 * 864e5;
+  const groups = [...new Set(all.map(s => s.group))].sort().filter(g => !sel || g === sel);
+  if (!groups.length) return '';
+  return groups.map(g => {
+    const sts = all.filter(s => s.group === g), recs = recsAll.filter(r => r.g === g), S = Analytics.summary(recs), sk = Analytics.bySkill(recs);
+    const active = sts.filter(s => s.lastSeen && now - s.lastSeen < WEEK).length;
+    const idle = sts.filter(s => !(by[s.key] || []).length || !s.lastSeen || now - s.lastSeen >= WEEK).sort((a, b) => a.id - b.id);
+    const errs = Analytics.errorTypes(recs), eTop = Object.keys(errs).sort((a, b) => errs[b] - errs[a]).slice(0, 5);
+    const den = Analytics.byDenominator(recs), dTop = Object.keys(den).filter(d => den[d].a >= 8).sort((a, b) => den[a].acc - den[b].acc).slice(0, 3);
+    return '<div class="card"><h3>📊 Grupo ' + esc(g) + ' · ' + sts.length + ' alumno' + (sts.length === 1 ? '' : 's') + '</h3>' +
+      '<p class="muted">Aciertos del grupo: <b>' + (S.a ? pct(S.acc) : '—') + '</b> · Intentos: ' + S.a + ' · Tiempo promedio: ' + (S.a ? secs(S.avgMs) : '—') + ' · Practicaron esta semana: <b>' + active + ' de ' + sts.length + '</b></p>' +
+      '<div class="grid2"><div><b>Aciertos por reto</b>' + (Object.keys(sk).map(k => meter(Config.SKILLS[k] ? Config.SKILLS[k].icon + ' ' + Config.SKILLS[k].name : k, sk[k])).join('') || '<p class="muted small">Sin datos</p>') + '</div>' +
+      '<div><b>Dónde más fallan</b><ul style="margin:6px 0">' + (eTop.map(k => '<li>' + esc(Config.ERR_LABELS[k] || k) + ' (' + errs[k] + ')</li>').join('') || '<li class="muted">Sin errores registrados</li>') + '</ul>' +
+      (dTop.length ? '<p class="muted small">Denominadores más difíciles: ' + dTop.map(d => d + ' (' + pct(den[d].acc) + ')').join(' · ') + '</p>' : '') + '</div></div>' +
+      '<div style="margin-top:10px"><b>Sin practicar esta semana (' + idle.length + ')</b><div>' +
+      (idle.map(s => '<span class="badge med" title="' + (s.lastSeen ? 'Última vez: ' + fmtDate(s.lastSeen) : 'Nunca ha entrado') + '">' + esc(s.name || 'Lista ' + s.id) + (s.lastSeen ? '' : ' · nunca') + '</span>').join('') || '<span class="badge ok">Todos practicaron</span>') + '</div>' +
+      '<p class="muted small">Para ver nombres en lugar de números, carga tu lista abajo (los nombres solo se guardan en este equipo).</p></div></div>';
+  }).join('');
+}
+
+
+function viewLogin() {
+  App.keys = null; App.demo = false; App.inGame = false;
+  try { document.getElementById('app').style.zoom = 1; } catch (e) { /* ignorar */ }
+  if (App.studentStore) App.store = App.studentStore;
+  if (Cloud.on) return viewLoginCloud();
+  const groups = [...new Set(App.store.students().map(s => s.group))].sort();
+  mount('<div class="card center">' +
+    '<h1 class="logo">Frac<span>Lab</span></h1><p class="muted">Aprende fracciones jugando</p>' +
+    (App.store.persistent ? '' : '<p class="err" style="background:#fef3c7;border-radius:10px;padding:8px">Este navegador no guarda datos: tus resultados se perderán al cerrar.</p>') +
+    '<label for="grp">Grupo</label><input type="text" id="grp" maxlength="6" autocomplete="off" list="grps" value="' + esc(Prefs.get('lastGroup', '')) + '" placeholder="Ej. 1F">' +
+    '<datalist id="grps">' + groups.map(g => '<option value="' + esc(g) + '">').join('') + '</datalist>' +
+    '<div id="pickwrap"></div>' +
+    '<label for="num">Número de lista</label><input type="number" id="num" min="1" max="99" inputmode="numeric">' +
+    '<div class="who" id="who"></div><div class="err" id="err"></div>' +
+    '<button class="btn primary big" id="go">Entrar a jugar</button>' +
+    '<div><button class="link" id="clase">Modo docente (jugar como alumnos)</button><button class="link" id="teacher">Zona docente</button></div></div>');
+  const $ = id => document.getElementById(id), grpNow = () => normGroup($('grp').value);
+  const who = () => {
+    const st = App.store.student(grpNow() + '-' + parseInt($('num').value, 10));
+    $('who').textContent = st && st.name ? '👤 ' + st.name : '';
+  };
+  const pickList = () => {
+    const ros = App.store.roster(grpNow()).sort((a, b) => a.id - b.id);
+    $('pickwrap').innerHTML = ros.length ? '<label for="pick">Elige tu nombre</label><select id="pick"><option value="">— Toca aquí —</option>' +
+      ros.map(s => '<option value="' + s.id + '">' + s.id + ' · ' + esc(s.name) + '</option>').join('') + '</select>' : '';
+    if ($('pick')) $('pick').onchange = e => { $('num').value = e.target.value; who(); if (e.target.value) $('go').focus(); };
+    who();
+  };
+  const go = () => {
+    const grp = grpNow(), num = parseInt($('num').value, 10);
+    if (!grp) return ($('err').textContent = 'Escribe tu grupo.');
+    if (!(num >= 1 && num <= 99)) return ($('err').textContent = 'Escribe tu número de lista (1 a 99).');
+    const key = grp + '-' + num, ros = App.store.roster(grp);
+    if (ros.length && !(App.store.student(key) || {}).name) return ($('err').textContent = 'Ese número no está en la lista de ' + grp + '. Revisa con tu maestro.');
+    Prefs.set('lastGroup', grp);
+    const st = App.store.student(key) || {key, group: grp, id: num, points: 0, bestStreak: 0, created: Date.now()};
+    st.lastSeen = Date.now(); App.store.upsertStudent(st);
+    App.user = st; viewMenu();
+  };
+  $('go').onclick = go;
+  $('num').addEventListener('input', who);
+  $('grp').addEventListener('input', pickList);
+  $('num').addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
+  $('grp').addEventListener('keydown', e => { if (e.key === 'Enter') $('num').focus(); });
+  $('teacher').onclick = () => askPin(viewTeacher);
+  $('clase').onclick = () => askPin(viewDemo);
+  pickList();
+}
+
+/* ---------- Menú ---------- */
+function viewMenu() {
+  App.keys = null;
+  if (App.studentStore) App.store = App.studentStore;
+  const u = App.store.student(App.user.key), lvl = Math.floor((u.points || 0) / 100) + 1;
+  const mine = App.store.records(r => r.sk === u.key), acc = mine.length ? pct(mine.filter(r => r.ok).length / mine.length) : '—';
+  let modes = '';
+  Object.keys(Config.SKILLS).forEach(k => {
+    const s = Config.SKILLS[k];
+    modes += s.active
+      ? '<button class="mode" data-skill="' + k + '"><span class="ic">' + s.icon + '</span><b>' + s.name + '</b><span class="muted">' + s.desc + '</span></button>'
+      : '<div class="mode locked"><span class="ic">🔒</span><b>' + s.name + '</b><span class="muted small">Próximamente</span></div>';
+  });
+  const tl = Config.TIME;
+  mount('<div class="topbar"><div><h2>Hola, ' + (u.name ? esc(Roster.firstName(u.name)) : 'lista ' + u.id) + ' · ' + esc(u.group) + '</h2><span class="muted">Aciertos: ' + acc + ' · Mejor racha: ' + (u.bestStreak || 0) + '</span></div>' +
+    '<div><span class="pill">⭐ ' + (u.points || 0) + ' pts · Nivel de jugador ' + lvl + '</span> <button class="btn" id="stats">📊 Mis estadísticas</button> <button class="btn" id="out">Salir</button></div></div>' +
+    '<div class="card"><h3>Elige la dificultad</h3><div class="levels">' +
+    [1, 2, 3].map(l => '<button class="lvl' + (App.level === l ? ' on' : '') + '" data-l="' + l + '">' + Config.LEVELS[l].name + '</button>').join('') +
+    '</div><p class="muted small" id="lvinfo">' + Config.LEVELS[App.level].shapes.map(s => Config.SHAPES[s].icon + ' ' + Config.SHAPES[s].name).join(' · ') +
+    ' · fracciones con denominador hasta ' + Math.max.apply(null, Config.LEVELS[App.level].denoms) + '<br>🧮 MCM: ' + Config.MCM.ROUND + ' intentos de ' + Config.MCM.LEVELS[App.level].desc + ' (del ' + Config.MCM.LEVELS[App.level].min + ' al ' + Config.MCM.LEVELS[App.level].max + ') · acierto = máximo 1 error y 1 pista' +
+    '<br>✂️ Simplifica: ' + Config.SIMP.ROUND + ' intentos de ' + Config.SIMP.LEVELS[App.level].desc +
+    '<br>🏁 Suma: ' + Config.ADD.ROUND + ' ejercicios de ' + Config.ADD.LEVELS[App.level].desc + '</p>' +
+    '<h3>Elige el reto</h3><div class="modes">' + modes + '</div></div>' +
+    '<div class="row"><label class="chk"><input type="checkbox" id="tmr" ' + (App.timerOn ? 'checked' : '') + '> ⏱ Con temporizador (' + tl.identify[App.level] + ' s por pregunta al identificar, ' + tl.color[App.level] + ' s al colorear, ' + tl.mcm[App.level] + ' s por colección en MCM, ' + tl.simplify[App.level] + ' s por fracción al simplificar, ' + tl.addsub_unlike[App.level] + ' s por suma)</label>' +
+    '<label class="chk"><input type="checkbox" id="snd" ' + (Sound.on ? 'checked' : '') + '> 🔊 Sonidos</label>' +
+    '<label class="chk"><input type="checkbox" id="mus" ' + (Music.on ? 'checked' : '') + '> 🎵 Música</label></div>' +
+    '<p class="muted small center" style="max-width:none">' + (Cloud.on ? '☁️ Tus resultados se guardan en la nube. Si no hay internet, se envían cuando regrese.' : '💾 Tus resultados se guardan solos en este navegador.') + '</p>');
+  document.getElementById('out').onclick = () => { App.user = null; viewLogin(); };
+  document.getElementById('stats').onclick = viewStats;
+  document.getElementById('snd').onchange = e => { Sound.on = e.target.checked; Prefs.set('sound', Sound.on); };
+  document.getElementById('mus').onchange = e => { Music.on = e.target.checked; Prefs.set('music', Music.on); };
+  document.getElementById('tmr').onchange = e => { App.timerOn = e.target.checked; Prefs.set('timer', App.timerOn); };
+  document.querySelectorAll('.lvl').forEach(b => b.onclick = () => { App.level = +b.dataset.l; viewMenu(); });
+  document.querySelectorAll('.mode[data-skill]').forEach(b => b.onclick = () => startRound(b.dataset.skill, App.level));
+}
+
+/* ---------- Estadísticas del alumno ---------- */
+function meter(name, s) {
+  return '<div class="statrow"><span class="nm">' + name + '</span><span class="meter"><i style="width:' + Math.round(s.acc * 100) + '%"></i></span><span class="val">' + pct(s.acc) + ' · ' + s.c + '/' + s.a + '</span></div>';
+}
+function viewStats() {
+  App.keys = null;
+  const u = App.store.student(App.user.key), recs = App.store.records(r => r.sk === u.key), S = Analytics.summary(recs);
+  const sk = Analytics.bySkill(recs), sh = Analytics.byShape(recs), lv = Analytics.byLevel(recs);
+  const last = recs.slice().sort((a, b) => a.ts - b.ts).slice(-30);
+  mount('<div class="topbar"><h2>📊 Mis estadísticas · ' + (u.name ? esc(u.name) : 'lista ' + u.id) + '</h2><button class="btn" id="back">← Volver</button></div>' +
+    (recs.length ? '' : '<div class="card"><p>Aún no has jugado. ¡Elige un reto y empieza!</p></div>') +
+    '<div class="card"><div class="grid3">' +
+    '<div><div class="muted small">Rondas jugadas</div><h2>' + S.rounds + '</h2></div>' +
+    '<div><div class="muted small">Aciertos</div><h2>' + (S.a ? pct(S.acc) : '—') + '</h2></div>' +
+    '<div><div class="muted small">Tiempo promedio por pregunta</div><h2>' + (S.a ? secs(S.avgMs) : '—') + '</h2></div>' +
+    '<div><div class="muted small">Puntos</div><h2>⭐ ' + (u.points || 0) + '</h2></div>' +
+    '<div><div class="muted small">Mejor racha</div><h2>🔥 ' + (u.bestStreak || 0) + '</h2></div>' +
+    '<div><div class="muted small">Tiempos agotados</div><h2>⏰ ' + S.timeouts + '</h2></div></div></div>' +
+    (recs.length ? '<div class="card"><h3>Por reto</h3>' + Object.keys(sk).map(k => meter(Config.SKILLS[k].name, sk[k])).join('') +
+    '<h3>Por nivel</h3>' + Object.keys(lv).sort().map(k => meter('Nivel ' + k, lv[k])).join('') +
+    '<h3>Por figura</h3>' + Object.keys(sh).map(k => meter(shapeName(k), sh[k])).join('') +
+    '<h3>Últimas respuestas</h3><div class="dots">' + last.map(r => '<i class="' + (r.ok ? '' : r.to ? 't' : 'x') + '" title="' + (r.nums ? r.nums.join(', ') : r.n + '/' + r.d) + '"></i>').join('') + '</div>' +
+    '<p class="muted small">Verde = acierto · Rojo = error · Naranja = se acabó el tiempo</p></div>' : ''), false);
+  document.getElementById('back').onclick = viewMenu;
+}
+
+/* ---------- Juego ---------- */
+function startRound(skill, level, custom) {
+  const qs = custom ? custom : skill === 'mcm' ? Content.makeMcmRound(level, Config.MCM.ROUND)
+           : skill === 'addsub_unlike' ? Content.makeAddRound(level, Config.ADD.ROUND)
+           : skill === 'simplify' ? Content.makeSimpRound(level, Config.SIMP.ROUND)
+           : Content.makeRound(skill, level, Config.ROUND_SIZE);
+  Music.play(); App.inGame = true;
+  App.game = {skill, level, qs, i: 0, correct: 0, points: 0, streak: 0, bestStreak: 0, rid: Date.now().toString(36), timer: App.timerOn, timeouts: 0, custom: !!custom};
+  viewQuestion();
+}
+
+function viewQuestion() {
+  const G = App.game, q = G.qs[G.i];
+  if (q.skill === 'mcm') return viewMcm();
+  if (q.skill === 'simplify') return viewSimp();
+  if (q.skill === 'addsub_unlike') return viewAdd();
+  G.locked = false; G.t0 = performance.now();
+  G.layout = Shape.layout(q.shape, q.d, 1, 640, 320);
+  G.filled = q.skill === 'identify' ? q.filled : new Set(); G.cursor = 0;
+  G.limit = Config.TIME[q.skill][G.level]; Music.setTension(G.timer ? 0 : 0.25);
+  const head = '<div class="topbar"><span class="pill">' + Config.SKILLS[q.skill].icon + ' ' + Config.LEVELS[G.level].name + ' · Pregunta ' + (G.i + 1) + ' de ' + G.qs.length + '</span>' +
+    '<span><span class="pill" id="pts">⭐ ' + G.points + '</span> <span class="pill" id="stk">🔥 ' + G.streak + '</span> <button class="btn" id="quit">Salir</button></span></div>' +
+    '<div class="bar"><i style="width:' + (G.i / G.qs.length * 100) + '%"></i></div>' +
+    (G.timer ? '<div class="tbar"><i id="tb"></i><span id="tt"></span></div>' : '');
+  let body;
+  if (q.skill === 'identify') {
+    body = '<div class="prompt">¿Qué fracción está coloreada?</div><div class="stage"><canvas id="cv" width="1280" height="640" aria-label="' + Config.SHAPES[q.shape].name + ' con partes coloreadas"></canvas></div>' +
+      '<div class="opts">' + q.options.map((o, i) => '<button class="opt" data-i="' + i + '"><span class="k">' + (i + 1) + '</span>' + frac(o.n, o.d) + '</button>').join('') + '</div>';
+  } else {
+    body = '<div class="prompt">Colorea ' + frac(q.n, q.d, 'lg') + ' de ' + Config.SHAPES[q.shape].icon + ' la figura</div><div class="stage"><canvas id="cv" width="1280" height="640" tabindex="0" aria-label="Figura para colorear"></canvas></div>' +
+      '<div class="row"><button class="btn" id="clr">Borrar</button><button class="btn primary" id="chk">Comprobar ✔</button></div>' +
+      '<p class="muted small center" style="margin:8px auto;max-width:none">Toca las partes, o usa las flechas y la barra espaciadora. Enter = comprobar.</p>';
+  }
+  mount(head + '<div class="card">' + body + '<div class="fb hidden" id="fb"></div></div>', false, true);
+  document.getElementById('quit').onclick = () => askConfirm('¿Salir de la ronda?', exitGame, 'Sí, salir');
+  const cv = document.getElementById('cv'), L = G.layout;
+  if (q.skill === 'identify') {
+    Shape.draw(cv, L, q.filled);
+    document.querySelectorAll('.opt').forEach(b => b.onclick = () => answerIdentify(+b.dataset.i));
+    App.keys = e => { const n = parseInt(e.key, 10); if (n >= 1 && n <= 4 && !G.locked) answerIdentify(n - 1); };
+  } else {
+    const redraw = () => Shape.draw(cv, L, G.filled, {cursor: G.locked ? -1 : G.cursor});
+    G.redraw = redraw; redraw();
+    cv.onpointerdown = ev => {
+      if (G.locked) return;
+      const r = cv.getBoundingClientRect(), i = Shape.hit(L, (ev.clientX - r.left) * L.W / r.width, (ev.clientY - r.top) * L.H / r.height);
+      if (i >= 0) { G.cursor = i; toggle(i); }
+    };
+    const toggle = i => { G.filled.has(i) ? G.filled.delete(i) : G.filled.add(i); redraw(); };
+    document.getElementById('clr').onclick = () => { if (!G.locked) { G.filled.clear(); redraw(); } };
+    document.getElementById('chk').onclick = () => { if (!G.locked) checkColor(); };
+    App.keys = e => {
+      if (G.locked) return;
+      const n = L.parts.length, step = L.rows > 1 ? L.cols : 1;
+      if (e.key === 'ArrowRight') G.cursor = (G.cursor + 1) % n;
+      else if (e.key === 'ArrowLeft') G.cursor = (G.cursor - 1 + n) % n;
+      else if (e.key === 'ArrowDown') G.cursor = Math.min(n - 1, G.cursor + step);
+      else if (e.key === 'ArrowUp') G.cursor = Math.max(0, G.cursor - step);
+      else if (e.key === ' ') { toggle(G.cursor); e.preventDefault(); return; }
+      else if (e.key === 'Enter') { checkColor(); return; }
+      else return;
+      e.preventDefault(); redraw();
+    };
+  }
+  if (G.timer) startTimer(G);
+}
+
+function startTimer(G) { G.deadline = performance.now() + G.limit * 1000; tickLoop(G); }
+function tickLoop(G) {
+  const tb = document.getElementById('tb'), tt = document.getElementById('tt'), total = G.limit * 1000; let lastSec = -1;
+  App.tick = setInterval(() => {
+    const left = Math.max(0, G.deadline - performance.now()), f = left / total;
+    tb.style.width = (f * 100) + '%'; tb.className = f < 0.25 ? 'low' : ''; Music.setTension(1 - f);
+    const s = Math.ceil(left / 1000); tt.textContent = s + ' s';
+    if (s !== lastSec) { lastSec = s; if (s <= 3 && s > 0) Sound.tick(); }
+    if (left <= 0) { stopTimer(); timeUp(); }
+  }, 100);
+}
+
+function timeUp() {
+  const G = App.game, q = G.qs[G.i]; if (G.locked) return;
+  if (q.skill === 'mcm') return finalizeMcm(false, true);
+  if (q.skill === 'simplify') return finalizeSimp(false, true);
+  if (q.skill === 'addsub_unlike') return finalizeAdd(true);
+  if (q.skill === 'identify') document.querySelectorAll('.opt').forEach((b, k) => { b.disabled = true; if (q.options[k].ok) b.classList.add('right'); });
+  finalize(false, 'timeout', '—', true);
+}
+
+function answerIdentify(i) {
+  const G = App.game, q = G.qs[G.i]; if (G.locked) return;
+  const o = q.options[i];
+  document.querySelectorAll('.opt').forEach((b, k) => { b.disabled = true; if (q.options[k].ok) b.classList.add('right'); });
+  if (!o.ok) document.querySelectorAll('.opt')[i].classList.add('wrong');
+  finalize(o.ok, o.ok ? null : Content.classifyIdentify(q, o), o.n + '/' + o.d);
+}
+function checkColor() {
+  const G = App.game, q = G.qs[G.i]; if (G.locked) return;
+  const k = G.filled.size, ok = k === q.n;
+  finalize(ok, ok ? null : Content.classifyColor(q, k), String(k));
+}
+
+function finalize(ok, err, answer, timedOut) {
+  const G = App.game, q = G.qs[G.i], ms = Math.round(performance.now() - G.t0);
+  const leftFrac = G.timer ? Math.max(0, (G.deadline - performance.now()) / (G.limit * 1000)) : 0;
+  stopTimer(); G.locked = true; Music.setTension(0);
+  let pts = 0;
+  if (ok) {
+    G.correct++; G.streak++; G.bestStreak = Math.max(G.bestStreak, G.streak);
+    const speed = G.timer ? Math.round(8 * leftFrac) : (ms < 6000 ? 5 : 0);
+    pts = 10 + speed + (G.streak >= 5 ? 10 : G.streak >= 3 ? 5 : 0);
+  } else G.streak = 0;
+  if (timedOut) G.timeouts++;
+  G.points += pts;
+  const u = App.demo ? App.user : App.store.student(App.user.key);
+  if (!App.demo) App.store.upsertStudent({key: u.key, points: (u.points || 0) + pts, bestStreak: Math.max(u.bestStreak || 0, G.bestStreak), lastSeen: Date.now()});
+  if (!App.demo) App.store.addRecord({sk: u.key, g: u.group, st: u.id, ts: Date.now(), rd: G.rid, skill: q.skill, lvl: q.level, n: q.n, d: q.d, shape: q.shape,
+                       ok, ms, err: err || '', ans: answer, to: !!timedOut, lim: G.timer ? G.limit : 0});
+  ok ? Sound.ok() : Sound.bad();
+  if (ok) popup('+' + pts);
+  document.getElementById('pts').textContent = '⭐ ' + G.points;
+  document.getElementById('stk').textContent = '🔥 ' + G.streak;
+  if (G.redraw) G.redraw();
+  let msg;
+  if (timedOut) msg = '⏰ ¡Se acabó el tiempo! Eran ' + q.n + ' parte' + (q.n > 1 ? 's' : '') + ' de ' + q.d + ': ' + frac(q.n, q.d);
+  else if (q.skill === 'identify') msg = (ok ? '¡Correcto! ' : 'Casi. ') + 'Hay ' + q.n + ' parte' + (q.n > 1 ? 's' : '') + ' coloreada' + (q.n > 1 ? 's' : '') + ' de ' + q.d + ' partes iguales: ' + frac(q.n, q.d);
+  else msg = ok ? '¡Muy bien! Coloreaste ' + q.n + ' de ' + q.d + ' partes: ' + frac(q.n, q.d)
+                : 'Debías colorear ' + q.n + ' de ' + q.d + ' partes (' + frac(q.n, q.d) + '). Coloreaste ' + answer + '.';
+  const fb = document.getElementById('fb');
+  fb.className = 'fb ' + (ok ? 'good' : 'bad');
+  fb.innerHTML = msg + '<div class="row"><button class="btn primary" id="next">' + (G.i + 1 >= G.qs.length ? 'Ver resultado' : 'Siguiente') + ' ➜</button></div>';
+  const chk = document.getElementById('chk'); if (chk) chk.disabled = true;
+  const next = () => { G.i++; G.i >= G.qs.length ? viewSummary() : viewQuestion(); };
+  document.getElementById('next').onclick = next;
+  document.getElementById('next').focus();
+  App.keys = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); next(); } };
+}
+
+/* ---------- Resumen ---------- */
+function viewSummary() {
+  App.inGame = false;
+  const G = App.game, acc = G.correct / G.qs.length, stars = acc >= 0.85 ? 3 : acc >= 0.6 ? 2 : acc >= 0.35 ? 1 : 0;
+  Sound.win(); App.keys = null;
+  const up = acc >= (G.skill === 'mcm' || G.skill === 'simplify' || G.skill === 'addsub_unlike' ? 0.8 : 0.85) && G.level < 3 && !G.custom;
+  mount('<div class="card center" style="max-width:560px"><h2>¡Ronda terminada!</h2>' +
+    '<div class="stars">' + '★'.repeat(stars) + '<span style="color:#d3d9ea">' + '★'.repeat(3 - stars) + '</span></div>' +
+    '<p style="font-size:22px"><b>' + G.correct + ' de ' + G.qs.length + '</b> correctas (' + pct(acc) + ')</p>' +
+    '<p class="muted">⭐ ' + G.points + ' puntos · 🔥 mejor racha ' + G.bestStreak + (G.timer ? ' · ⏰ ' + G.timeouts + ' sin tiempo' : '') + '</p>' +
+    (up ? '<p><b>¡Ya dominas este nivel! Prueba el siguiente.</b></p>' : '') +
+    (up ? '<button class="btn ok big" id="up">Subir al ' + Config.LEVELS[G.level + 1].name + '</button>' : '') +
+    '<button class="btn primary big" id="again">Jugar otra vez</button>' +
+    '<button class="btn big" id="menu">' + (App.demo ? 'Volver al Modo docente' : 'Cambiar de reto') + '</button>' +
+    '<button class="btn big" id="st">📊 Mis estadísticas</button></div>');
+  document.getElementById('again').onclick = () => startRound(G.skill, G.level, G.custom ? G.qs.map(q => Object.assign({}, q)) : null);
+  document.getElementById('menu').onclick = exitGame;
+  if (App.demo) document.getElementById('st').remove(); else document.getElementById('st').onclick = viewStats;
+  if (up) document.getElementById('up').onclick = () => { App.level = G.level + 1; startRound(G.skill, App.level); };
+}
+
+/* ---------- Modo docente: juega como los alumnos ---------- */
+// Ejercicios propios del docente: una línea por ejercicio
+const Custom = {
+  frac(t) {   // "2 4/8", "8/12" -> {w,n,d}
+    const m = /^\s*(?:(\d+)\s+)?(\d+)\s*\/\s*(\d+)\s*$/.exec(t);
+    if (!m) return null;
+    const w = m[1] ? +m[1] : 0, n = +m[2], d = +m[3];
+    return d >= 2 && d <= 999 && n >= 1 && n <= 9999 && w <= 99 ? {w, n, d} : null;
+  },
+  parse(skill, text, level) {
+    const lines = text.split(/\n+/).map(x => x.trim()).filter(Boolean), qs = [], bad = [];
+    lines.forEach((ln, i) => {
+      const fail = () => bad.push('Línea ' + (i + 1) + ': "' + ln + '"');
+      if (skill === 'mcm') {
+        const nums = ln.split(/[\s,;y]+/).filter(Boolean).map(Number);
+        if (nums.length < 2 || nums.length > 5 || nums.some(n => !(n >= 2 && n <= 60) || n % 1)) return fail();
+        qs.push({skill: 'mcm', level, nums, mcm: MathUtil.lcmAll(nums), key: nums.join(',')});
+      } else if (skill === 'simplify') {
+        const f = Custom.frac(ln); if (!f) return fail();
+        const kind = f.w ? 'mixed' : f.n >= f.d ? 'improper' : 'simple';
+        qs.push(Content.finishSimp({skill: 'simplify', level, kind, w: f.w, n: f.n, d: f.d, key: ln}));
+      } else if (skill === 'addsub_unlike') {
+        const fr = ln.split('+').map(Custom.frac);
+        if (fr.length < 2 || fr.length > 4 || fr.some(f => !f)) return fail();
+        const sol = Content.solveAdd(fr);
+        qs.push({skill: 'addsub_unlike', level, fr, key: ln, sol, mcm: sol.mcm});
+      }
+    });
+    return {qs, bad};
+  },
+  EX: {mcm: '2 4 6\n3 5', simplify: '8/12\n2 4/8\n3 2/4', addsub_unlike: '1 1/2 + 2 1/4 + 1 1/6\n1/3 + 3/4'},
+  HELP: {mcm: 'Una línea por ejercicio, números separados por espacio (2 a 5 números).', simplify: 'Una línea por fracción: 8/12 o mixta como 2 4/8.', addsub_unlike: 'Una línea por suma: 1 1/2 + 2 1/4 + 1 1/6 (2 a 4 fracciones).'}
+};
+function viewDemo() {
+  App.keys = null; App.inGame = false; App.demo = true;
+  App.user = {key: '__docente__', group: 'DOC', id: 0, name: 'Docente', points: 0, bestStreak: 0};
+  App.timerOn = Prefs.get('demoTimer', false);
+  App.zoom = Prefs.get('zoom', 1); document.getElementById('app').style.zoom = App.zoom;
+  let modes = '';
+  Object.keys(Config.SKILLS).forEach(k => {
+    const s = Config.SKILLS[k];
+    if (s.active) modes += '<button class="mode" data-skill="' + k + '"><span class="ic">' + s.icon + '</span><b>' + s.name + '</b><span class="muted">' + s.desc + '</span></button>';
+  });
+  mount('<div class="topbar"><div><h2>👩‍🏫 Modo docente</h2><span class="muted">Juega exactamente como los alumnos. Nada de esto se guarda en las estadísticas.</span></div>' +
+    '<div><button class="btn" id="pz">📋 Pizarra paso a paso</button> <button class="btn" id="zd">Zona docente</button> <button class="btn" id="out">Salir</button></div></div>' +
+    '<div class="card"><h3>Elige la dificultad</h3><div class="levels">' +
+    [1, 2, 3].map(l => '<button class="lvl' + (App.level === l ? ' on' : '') + '" data-l="' + l + '">' + Config.LEVELS[l].name + '</button>').join('') +
+    '</div><h3>Elige el reto</h3><div class="modes">' + modes + '</div></div>' +
+    '<div class="row"><label class="chk"><input type="checkbox" id="tmr" ' + (App.timerOn ? 'checked' : '') + '> ⏱ Con temporizador</label>' +
+    '<label class="chk"><input type="checkbox" id="snd" ' + (Sound.on ? 'checked' : '') + '> 🔊 Sonidos</label>' +
+    '<label class="chk"><input type="checkbox" id="mus" ' + (Music.on ? 'checked' : '') + '> 🎵 Música</label></div>' +
+    '<p class="muted small center" style="max-width:none">Durante el juego: En el juego, arriba, escribes <b>tus propias fracciones</b> en casillas · <b>⏭ Saltar</b> cambia de ejercicio · <b>A−/A+</b> ajusta el tamaño para el proyector.</p>');
+  const $ = id => document.getElementById(id);
+  $('out').onclick = () => { App.demo = false; App.user = null; App.inGame = false; $('app').style.zoom = 1; viewLogin(); };
+  $('pz').onclick = viewClass;
+  $('zd').onclick = () => { App.demo = false; App.user = null; $('app').style.zoom = 1; openTeacher(); };
+  $('snd').onchange = e => { Sound.on = e.target.checked; Prefs.set('sound', Sound.on); };
+  $('mus').onchange = e => { Music.on = e.target.checked; Prefs.set('music', Music.on); };
+  $('tmr').onchange = e => { App.timerOn = e.target.checked; Prefs.set('demoTimer', App.timerOn); };
+  document.querySelectorAll('.lvl:not(.csk)').forEach(b => b.onclick = () => { App.level = +b.dataset.l; viewDemo(); });
+  document.querySelectorAll('.mode[data-skill]').forEach(b => b.onclick = () => startRound(b.dataset.skill, App.level));
+}
+
+/* ---------- Modo clase ---------- */
+function viewClass() {
+  App.keys = null;
+  const saved = Prefs.get('cls', {});
+  const C = App.cls = Object.assign({shape: 'pizza', tipo: 'propia', w: 0, n: 3, d: 8, show: true, numbers: false, manual: false}, App.cls || saved);
+  C.fill = new Set();
+  mount('<div class="topbar"><h2>🧑‍🏫 Modo clase</h2><span><button class="btn sm" id="fs">⛶ Pantalla completa</button> <button class="btn sm" id="back">← Salir</button></span></div>' +
+    classTabs('fig') + '<div class="card"><label style="margin-top:0">Figura</label><div class="shapes">' +
+    Object.keys(Config.SHAPES).map(k => '<button class="shp" data-s="' + k + '">' + Config.SHAPES[k].icon + ' ' + Config.SHAPES[k].name + '</button>').join('') + '</div>' +
+    '<div class="ctl">' +
+    '<div><label for="tipo">Tipo de fracción</label><select id="tipo"><option value="propia">Propia</option><option value="impropia">Impropia</option><option value="mixta">Mixta (con entero)</option></select></div>' +
+    '<div><label for="cw">Enteros</label><input type="number" id="cw" min="0" max="' + Config.CLASS.maxWhole + '"></div>' +
+    '<div><label for="cn">Numerador</label><input type="number" id="cn" min="0" max="999"></div>' +
+    '<div><label for="cd">Denominador</label><input type="number" id="cd" min="2" max="' + Config.CLASS.maxDen + '"></div></div>' +
+    '<div class="row left"><button class="btn sm" id="rnd">🎲 Aleatoria</button>' +
+    '<label class="chk"><input type="checkbox" id="cshow"> Mostrar la fracción</label>' +
+    '<label class="chk"><input type="checkbox" id="cnum"> Numerar las partes</label>' +
+    '<label class="chk"><input type="checkbox" id="cman"> Colorear a mano (clic en la figura)</label>' +
+    '<span id="manbtns" class="hidden"><button class="btn sm" id="cclr">Borrar</button> <button class="btn sm primary" id="cchk">Comprobar ✔</button></span></div>' +
+    '<div class="err" id="cerr"></div></div>' +
+    '<div class="card"><div class="fraclabel" id="flabel"></div><div class="stage"><canvas class="cls" id="cv" width="1920" height="960" aria-label="Figura"></canvas></div>' +
+    '<div class="fb hidden" id="cfb"></div><p class="muted small center" id="cinfo" style="margin:10px auto 0;max-width:none"></p></div>', true);
+  const $ = id => document.getElementById(id);
+  const cv = $('cv');
+  let L = null, V = null;
+  const sync = () => { // refleja el estado en los controles
+    document.querySelectorAll('.shp').forEach(b => b.classList.toggle('on', b.dataset.s === C.shape));
+    $('tipo').value = C.tipo; $('cw').value = C.tipo === 'mixta' ? C.w : 0; $('cw').disabled = C.tipo !== 'mixta';
+    $('cn').value = C.n; $('cd').value = C.d;
+    $('cshow').checked = C.show; $('cnum').checked = C.numbers; $('cman').checked = C.manual;
+    $('manbtns').classList.toggle('hidden', !C.manual);
+  };
+  const paint = () => {
+    $('cfb').className = 'fb hidden';
+    if (!V || !V.ok) return;
+    const filled = C.manual ? C.fill : new Set([...Array(V.total).keys()]);
+    Shape.draw(cv, L, filled, {numbers: C.numbers});
+    $('flabel').innerHTML = C.show ? fracMixed(V.w, V.n, V.d, 'xl') : '<span class="mixw xl muted">?</span>';
+    const nm = Config.SHAPES[C.shape].name.toLowerCase();
+    $('cinfo').textContent = C.manual ? 'Coloreadas: ' + C.fill.size + ' parte' + (C.fill.size === 1 ? '' : 's') + ' · ' + V.nf + ' figura' + (V.nf > 1 ? 's' : '') + ' (' + nm + ') · cada una dividida en ' + V.d + ' partes iguales'
+      : V.nf + ' figura' + (V.nf > 1 ? 's' : '') + ' (' + nm + ') dividida' + (V.nf > 1 ? 's' : '') + ' en ' + V.d + ' partes iguales · ' + V.total + ' parte' + (V.total === 1 ? '' : 's') + ' coloreada' + (V.total === 1 ? '' : 's');
+  };
+  const update = (resetFill) => {
+    C.n = parseInt($('cn').value, 10); C.d = parseInt($('cd').value, 10); C.w = C.tipo === 'mixta' ? parseInt($('cw').value, 10) : 0;
+    V = Content.validateClass(C);
+    $('cerr').textContent = V.ok ? '' : V.msg;
+    if (V.ok) { L = Shape.layout(C.shape, V.d, V.nf, 960, 480); }
+    else { const ctx = cv.getContext('2d'); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height); $('flabel').innerHTML = ''; $('cinfo').textContent = ''; }
+    if (resetFill) C.fill = new Set();
+    Prefs.set('cls', {shape: C.shape, tipo: C.tipo, w: C.w, n: C.n, d: C.d, show: C.show, numbers: C.numbers});
+    paint();
+  };
+  const setValues = v => { Object.assign(C, v); sync(); update(true); };
+  document.querySelectorAll('.shp').forEach(b => b.onclick = () => { C.shape = b.dataset.s; sync(); update(true); });
+  $('tipo').onchange = e => {
+    C.tipo = e.target.value;
+    if (C.tipo === 'propia') { C.w = 0; if (C.n >= C.d) C.n = Math.max(1, C.d - 1); }
+    if (C.tipo === 'impropia') { C.w = 0; if (C.n < C.d) C.n = C.d + 1; }
+    if (C.tipo === 'mixta') { C.w = Math.max(1, C.w || 1); if (C.n >= C.d) C.n = Math.max(1, C.d - 1); }
+    sync(); update(true);
+  };
+  ['cw', 'cn', 'cd'].forEach(id => $(id).addEventListener('input', () => update(true)));
+  $('rnd').onclick = () => setValues(Content.randomClass(C.tipo));
+  $('cshow').onchange = e => { C.show = e.target.checked; update(false); };
+  $('cnum').onchange = e => { C.numbers = e.target.checked; update(false); };
+  $('cman').onchange = e => { C.manual = e.target.checked; C.fill = new Set(); sync(); update(false); };
+  $('cclr').onclick = () => { C.fill = new Set(); paint(); };
+  $('cchk').onclick = () => {
+    if (!V || !V.ok) return;
+    const ok = C.fill.size === V.total, fb = $('cfb');
+    fb.className = 'fb ' + (ok ? 'good' : 'bad');
+    fb.innerHTML = ok ? '✔ ¡Correcto! ' + fracMixed(V.w, V.n, V.d) + ' = ' + V.total + ' parte' + (V.total === 1 ? '' : 's') + ' coloreada' + (V.total === 1 ? '' : 's') + ' de ' + V.d + ' en cada figura.'
+      : 'Hay ' + C.fill.size + ' parte' + (C.fill.size === 1 ? '' : 's') + ' coloreada' + (C.fill.size === 1 ? '' : 's') + ' y la fracción pide ' + V.total + '. ¡Revisa!';
+    ok ? Sound.ok() : Sound.bad();
+  };
+  cv.onpointerdown = ev => {
+    if (!C.manual || !V || !V.ok) return;
+    const r = cv.getBoundingClientRect(), i = Shape.hit(L, (ev.clientX - r.left) * L.W / r.width, (ev.clientY - r.top) * L.H / r.height);
+    if (i >= 0) { C.fill.has(i) ? C.fill.delete(i) : C.fill.add(i); paint(); }
+  };
+  $('fs').onclick = () => { try { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); } catch (e) { /* no disponible */ } };
+  $('back').onclick = () => { try { if (document.fullscreenElement) document.exitFullscreen(); } catch (e) { /* ignorar */ } viewLogin(); };
+  $('tabmcm').onclick = viewClassMcm; $('tabsimp').onclick = viewClassSimp; $('tabadd').onclick = viewClassAdd; $('tabdemo').onclick = viewDemo;
+  sync(); update(true);
+}
+
+/* ---------- Reto MCM (descomposición simultánea) ---------- */
+function mtableHTML(rows, divs, inputs, xl) {
+  let h = '<div class="mtab' + (xl ? ' xl' : '') + '">';
+  rows.forEach((r, i) => {
+    h += '<div class="mrow' + (i === 0 ? ' first' : '') + '">' + r.map(x => '<span class="mc' + (i > 0 && x === 1 ? ' one' : '') + '">' + (x === null ? '' : i > 0 && x === 1 ? '<span>1</span>' : x) + '</span>').join('') +
+         '<span class="mdiv">' + (divs[i] != null ? divs[i] : '') + '</span></div>';
+  });
+  if (inputs) {
+    h += '<div class="mrow">';
+    inputs.forEach((on, i) => { h += '<span class="mc">' + (on ? '<input type="number" inputmode="numeric" id="mi' + i + '" aria-label="Número ' + (i + 1) + ' de la nueva fila">' : '') + '</span>'; });
+    h += '<span class="mdiv"></span></div>';
+  }
+  return h + '</div>';
+}
+
+function viewMcm() {
+  const G = App.game, q = G.qs[G.i];
+  G.locked = false; G.t0 = performance.now(); G.limit = Config.TIME.mcm[G.level] + 15 * (q.nums.length - 2); Music.setTension(G.timer ? 0 : 0.25);
+  G.m = {rows: [q.nums.slice()], divs: [], phase: 'div', er: 0, hn: 0, errs: {}, rowErr: 0, hintP: null};
+  const head = '<div class="topbar"><span class="pill">' + Config.SKILLS.mcm.icon + ' ' + Config.LEVELS[G.level].name + ' · Intento ' + (G.i + 1) + ' de ' + G.qs.length + ' · ' + q.nums.length + ' números</span>' +
+    '<span><span class="pill" id="pts">⭐ ' + G.points + '</span> <span class="pill" id="stk">🔥 ' + G.streak + '</span> <button class="btn" id="quit">Salir</button></span></div>' +
+    '<div class="bar"><i style="width:' + (G.i / G.qs.length * 100) + '%"></i></div>' +
+    (G.timer ? '<div class="tbar"><i id="tb"></i><span id="tt"></span></div>' : '');
+  mount(head + '<div class="card"><div class="prompt">Encuentra el mínimo común múltiplo de <b>' + q.nums.join(', ') + '</b></div>' +
+    '<div class="mstage" id="mt"></div><div id="mpanel"></div><div class="mmsg" id="mmsg"></div><div class="fb hidden" id="fb"></div></div>', false, true);
+  document.getElementById('quit').onclick = () => askConfirm('¿Salir de la ronda?', exitGame, 'Sí, salir');
+  App.keys = e => { if (G.locked || G.m.phase !== 'div') return; const n = parseInt(e.key, 10); if ([2, 3, 5, 7].includes(n)) chooseP(n); };
+  renderM();
+  if (G.timer) startTimer(G);
+}
+
+function setM(msg, kind) { const el = document.getElementById('mmsg'); if (el) { el.textContent = msg || ''; el.className = 'mmsg ' + (kind || ''); } }
+
+function renderM(msg, kind) {
+  const G = App.game, M = G.m, last = M.rows[M.rows.length - 1], $ = id => document.getElementById(id);
+  $('mt').innerHTML = mtableHTML(M.rows, M.divs, M.phase === 'fill' ? last.map(x => x > 1) : 0);
+  let p = '';
+  if (M.phase === 'div') {
+    p = '<p class="muted center" style="margin:0 0 10px;max-width:none"><b>Paso ' + (M.divs.length + 1) + '.</b> Elige el número primo por el que vas a dividir: el más pequeño que divide al menos a uno de los números.</p>' +
+        '<div class="pbtns">' + Config.MCM.PRIMES.map(x => '<button class="pbtn' + (M.hintP === x ? ' hint' : '') + '" data-p="' + x + '">' + x + '</button>').join('') + '</div>';
+  } else if (M.phase === 'fill') {
+    const pr = M.divs[M.divs.length - 1];
+    p = '<p class="muted center" style="margin:0 0 10px;max-width:none">Dividiste entre <b>' + pr + '</b>. Escribe la nueva fila: divide los números que se pueden dividir y <b>baja</b> los demás.</p>' +
+        '<div class="row"><button class="btn primary" id="mchk">Comprobar ✔</button></div>';
+  } else if (M.phase === 'prod') {
+    p = '<p class="muted center" style="margin:0 0 10px;max-width:none">¡Todos son 1! Multiplica los divisores de la derecha para descubrir el mcm.</p>' +
+        '<div class="mformula">mcm = ' + M.divs.join(' × ') + ' = <input type="number" id="mprod" inputmode="numeric"></div><div class="row"><button class="btn primary" id="mchk2">Comprobar ✔</button></div>';
+  }
+  if (M.phase !== 'done') p += '<div class="row"><button class="btn sm" id="mhint">💡 Pista (-3 pts)</button></div>';
+  $('mpanel').innerHTML = p; setM(msg, kind);
+  document.querySelectorAll('.pbtn').forEach(b => b.onclick = () => chooseP(+b.dataset.p));
+  if ($('mchk')) $('mchk').onclick = checkRow;
+  if ($('mchk2')) $('mchk2').onclick = checkProd;
+  if ($('mhint')) $('mhint').onclick = hintM;
+  document.querySelectorAll('#mt input').forEach(inp => inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); checkRow(); } }));
+  if ($('mprod')) { $('mprod').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); checkProd(); } }); $('mprod').focus(); }
+  const f0 = document.querySelector('#mt input'); if (f0) f0.focus();
+}
+
+function chooseP(p) {
+  const G = App.game, M = G.m; if (G.locked || M.phase !== 'div') return;
+  const last = M.rows[M.rows.length - 1];
+  if (!last.some(x => x > 1 && x % p === 0)) {
+    M.er++; M.errs.prime = (M.errs.prime || 0) + 1; Sound.bad();
+    return setM('❌ ' + p + ' no divide a ninguno de los números de la fila. Prueba con otro primo.', 'bad');
+  }
+  const small = MathUtil.smallestDivisor(last);
+  M.divs.push(p); M.phase = 'fill'; M.hintP = null; M.rowErr = 0;
+  renderM(p !== small ? 'Funciona, pero normalmente empezamos con el primo más pequeño (' + small + ').' : '', 'tip');
+}
+
+function checkRow() {
+  const G = App.game, M = G.m; if (G.locked || M.phase !== 'fill') return;
+  const last = M.rows[M.rows.length - 1], p = M.divs[M.divs.length - 1], exp = MathUtil.nextRow(last, p);
+  const wrong = [];
+  exp.forEach((v, i) => {
+    if (v === null) return;
+    const el = document.getElementById('mi' + i), s = el.value.trim(), ok = s !== '' && parseInt(s, 10) === v;
+    el.classList.toggle('bad', !ok); el.classList.toggle('good', ok);
+    if (!ok) wrong.push(i);
+  });
+  if (!wrong.length) { M.rows.push(exp); M.phase = MathUtil.rowDone(exp) ? 'prod' : 'div'; M.rowErr = 0; Sound.ok(); return renderM('✔ ¡Bien!', 'good'); }
+  M.er++; M.rowErr++; Sound.bad();
+  const types = new Set(wrong.map(i => (last[i] % p === 0 ? 'div' : 'down')));
+  types.forEach(t => { M.errs[t] = (M.errs[t] || 0) + 1; });
+  let msg = types.has('down') ? '❌ Si un número no se puede dividir entre ' + p + ', se baja igual.' : '❌ Revisa la división en las casillas rojas.';
+  if (M.rowErr >= 2) msg += ' Ayuda: ' + last.filter(x => x > 1).map(x => (x % p === 0 ? x + ' ÷ ' + p + ' = ' + (x / p) : x + ' se baja')).join(' · ');
+  setM(msg, 'bad');
+}
+
+function checkProd() {
+  const G = App.game, M = G.m; if (G.locked || M.phase !== 'prod') return;
+  const prod = M.divs.reduce((a, b) => a * b, 1), v = parseInt(document.getElementById('mprod').value, 10);
+  if (v === prod) { M.phase = 'done'; return finalizeMcm(true, false); }
+  M.er++; M.errs.mult = (M.errs.mult || 0) + 1; Sound.bad();
+  setM('❌ Multiplica solo los divisores de la derecha: ' + M.divs.join(' × ') + '. Hazlo de dos en dos.', 'bad');
+}
+
+function hintM() {
+  const G = App.game, M = G.m; if (G.locked) return;
+  const last = M.rows[M.rows.length - 1]; M.hn++;
+  if (M.phase === 'div') { M.hintP = MathUtil.smallestDivisor(last); return renderM('💡 Prueba con el ' + M.hintP + ': divide al menos a uno de los números.', 'tip'); }
+  if (M.phase === 'fill') { const p = M.divs[M.divs.length - 1]; return setM('💡 ' + last.filter(x => x > 1).map(x => (x % p === 0 ? x + ' ÷ ' + p + ' = ' + (x / p) : x + ' no se divide: se baja')).join(' · '), 'tip'); }
+  const d = M.divs; setM('💡 Multiplica de dos en dos: ' + d[0] + ' × ' + d[1] + ' = ' + (d[0] * d[1]) + (d.length > 2 ? ', y ese resultado × ' + d[2] + '…' : ''), 'tip');
+}
+
+function finalizeMcm(_ok, timedOut) {
+  const G = App.game, q = G.qs[G.i], M = G.m; if (G.locked) return;
+  const ms = Math.round(performance.now() - G.t0);
+  const leftFrac = G.timer ? Math.max(0, (G.deadline - performance.now()) / (G.limit * 1000)) : 0;
+  stopTimer(); G.locked = true; Music.setTension(0);
+  const ok = !timedOut && M.er <= 1 && M.hn <= 1;
+  let pts = 0;
+  if (ok) {
+    G.correct++; G.streak++; G.bestStreak = Math.max(G.bestStreak, G.streak);
+    const speed = G.timer ? Math.round(8 * leftFrac) : 0;
+    pts = Math.max(4, 10 + speed - 3 * M.hn - 2 * M.er) + (G.streak >= 5 ? 10 : G.streak >= 3 ? 5 : 0);
+  } else { G.streak = 0; pts = timedOut ? 0 : 2; }
+  if (timedOut) G.timeouts++;
+  G.points += pts;
+  const mainErr = timedOut ? 'timeout' : Object.keys(M.errs).sort((a, b) => M.errs[b] - M.errs[a])[0] || '';
+  const u = App.demo ? App.user : App.store.student(App.user.key);
+  if (!App.demo) App.store.upsertStudent({key: u.key, points: (u.points || 0) + pts, bestStreak: Math.max(u.bestStreak || 0, G.bestStreak), lastSeen: Date.now()});
+  if (!App.demo) App.store.addRecord({sk: u.key, g: u.group, st: u.id, ts: Date.now(), rd: G.rid, skill: 'mcm', lvl: q.level, nums: q.nums, mcm: q.mcm, n: null, d: null, shape: '',
+                       ok, ms, err: mainErr, errs: M.errs, er: M.er, hn: M.hn, to: !!timedOut, lim: G.timer ? G.limit : 0});
+  ok ? Sound.ok() : Sound.bad();
+  if (ok) popup('+' + pts);
+  const T = MathUtil.mcmTable(q.nums), $ = id => document.getElementById(id);
+  if (timedOut) $('mt').innerHTML = mtableHTML(T.rows, T.divs, 0);
+  $('mpanel').innerHTML = ''; setM('');
+  $('pts').textContent = '⭐ ' + G.points; $('stk').textContent = '🔥 ' + G.streak;
+  const msg = (ok ? '¡Muy bien! ' : timedOut ? '⏰ ¡Se acabó el tiempo! ' : 'Terminaste, pero con varios errores. ') +
+    'mcm → ' + T.divs.join(' × ') + ' = <b>' + q.mcm + '</b>' +
+    (q.nums.length === 2 ? '<div class="small" style="margin-top:8px">Por eso ' + frac(1, q.nums[0]) + ' + ' + frac(1, q.nums[1]) + ' se pueden sumar con denominador común <b>' + q.mcm + '</b>.</div>' : '');
+  const fb = $('fb'); fb.className = 'fb ' + (ok ? 'good' : 'bad');
+  fb.innerHTML = msg + '<div class="row"><button class="btn primary" id="next">' + (G.i + 1 >= G.qs.length ? 'Ver resultado' : 'Siguiente') + ' ➜</button></div>';
+  const next = () => { G.i++; G.i >= G.qs.length ? viewSummary() : viewQuestion(); };
+  $('next').onclick = next; $('next').focus();
+  App.keys = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); next(); } };
+}
+
+/* ---------- Reto Simplifica (números primos) ---------- */
+const simpPre = (q, cls, eq) => q.w > 0 ? fracMixed(q.w, q.n, q.d, cls || 'lg') + (eq === false ? '' : '<span class="eq">=</span>') : '';
+// cadena de fracciones como en el pizarrón: 8/12 ÷2 = 4/6 ÷2 = [2/3]
+function chainHTML(chain, boxLast, cls) {
+  return chain.map((c, i) => {
+    const last = i === chain.length - 1, whole = boxLast && last && c.d === 1;
+    const f = frac(c.n, c.d, cls || 'lg'), dv = c.p ? '<span class="dv"><b>÷' + c.p + '</b><b>÷' + c.p + '</b></span>' : '';
+    return '<span class="sf' + (boxLast && last && !whole ? ' fbox' : '') + '">' + f + dv + '</span>' +
+      (whole ? '<span class="eq">=</span><span class="fbox num">' + c.n + '</span>' : '') + (last ? '' : '<span class="eq">=</span>');
+  }).join('');
+}
+
+function viewSimp() {
+  const G = App.game, q = G.qs[G.i];
+  G.locked = false; G.t0 = performance.now(); G.limit = Config.TIME.simplify[G.level]; Music.setTension(G.timer ? 0 : 0.25);
+  G.s = {phase: q.w > 0 ? 'conv' : 'simp', chain: q.w > 0 ? [] : [{n: q.n, d: q.d, p: 0}], er: 0, hn: 0, errs: {}, hintP: null};
+  const head = '<div class="topbar"><span class="pill">' + Config.SKILLS.simplify.icon + ' ' + Config.LEVELS[G.level].name + ' · Intento ' + (G.i + 1) + ' de ' + G.qs.length + '</span>' +
+    '<span><span class="pill" id="pts">⭐ ' + G.points + '</span> <span class="pill" id="stk">🔥 ' + G.streak + '</span> <button class="btn" id="quit">Salir</button></span></div>' +
+    '<div class="bar"><i style="width:' + (G.i / G.qs.length * 100) + '%"></i></div>' +
+    (G.timer ? '<div class="tbar"><i id="tb"></i><span id="tt"></span></div>' : '');
+  mount(head + '<div class="card"><div class="prompt">' + (q.w > 0 ? 'Simplifica la fracción mixta' : 'Simplifica la fracción') + '</div>' +
+    '<div class="chain" id="sch"></div><div id="spanel"></div><div class="mmsg" id="mmsg"></div><div class="fb hidden" id="fb"></div></div>', false, true);
+  document.getElementById('quit').onclick = () => askConfirm('¿Salir de la ronda?', exitGame, 'Sí, salir');
+  App.keys = e => { const S = G.s; if (G.locked || S.phase !== 'simp') return; const n = parseInt(e.key, 10); if ([2, 3, 5, 7].includes(n)) chooseS(n); else if (e.key === '0') stopS(); };
+  renderS();
+  if (G.timer) startTimer(G);
+}
+
+function renderS(msg, kind) {
+  const G = App.game, q = G.qs[G.i], S = G.s, $ = id => document.getElementById(id);
+  let ch = simpPre(q), p = '';
+  if (S.phase === 'conv') {
+    ch += '<span class="frac lg"><span class="n"><input type="number" id="cin" inputmode="numeric" aria-label="Nuevo numerador"></span><span class="d">' + q.d + '</span></span>';
+    p = '<p class="muted center" style="margin:0 0 10px;max-width:none"><b>Paso 1.</b> Multiplica el entero por el denominador y suma el numerador. El resultado es el nuevo numerador; el denominador se queda igual.</p>' +
+        '<div class="row"><button class="btn primary" id="schk">Comprobar ✔</button></div>';
+  } else {
+    ch += chainHTML(S.chain, S.phase === 'done');
+    if (S.phase === 'simp') {
+      p = '<p class="muted center" style="margin:0 0 10px;max-width:none">Elige un número primo que divida <b>igual</b> al numerador y al denominador. Cuando ya ninguno sirva, detecta que ya no se puede simplificar.</p>' +
+          '<div class="pbtns">' + Config.SIMP.PRIMES.map(x => '<button class="pbtn' + (S.hintP === x ? ' hint' : '') + '" data-p="' + x + '">' + x + '</button>').join('') + '</div>' +
+          '<div class="row"><button class="btn ok sstop" id="sstop">✋ Ya no se puede simplificar</button></div>';
+    }
+  }
+  if (S.phase !== 'done') p += '<div class="row"><button class="btn sm" id="shint">💡 Pista (-3 pts)</button></div>';
+  $('sch').innerHTML = ch; $('spanel').innerHTML = p; setM(msg, kind);
+  document.querySelectorAll('#spanel .pbtn').forEach(b => b.onclick = () => chooseS(+b.dataset.p));
+  if ($('schk')) $('schk').onclick = checkConv;
+  if ($('sstop')) $('sstop').onclick = stopS;
+  if ($('shint')) $('shint').onclick = hintS;
+  if ($('cin')) { $('cin').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); checkConv(); } }); $('cin').focus(); }
+}
+
+function checkConv() {
+  const G = App.game, q = G.qs[G.i], S = G.s; if (G.locked || S.phase !== 'conv') return;
+  const v = parseInt(document.getElementById('cin').value, 10);
+  if (v === q.N) { S.phase = 'simp'; S.chain = [{n: q.N, d: q.d, p: 0}]; Sound.ok(); return renderS('✔ ' + q.w + ' × ' + q.d + ' + ' + q.n + ' = ' + q.N + '. Ahora simplifica por primos.', 'good'); }
+  S.er++; Sound.bad();
+  const t = v === q.w * q.d ? 'noadd' : 'conv'; S.errs[t] = (S.errs[t] || 0) + 1;
+  setM(t === 'noadd' ? '❌ Ya multiplicaste ' + q.w + ' × ' + q.d + ' = ' + (q.w * q.d) + '. Falta sumar el numerador.' : '❌ Revisa: primero multiplica ' + q.w + ' × ' + q.d + ' y después suma ' + q.n + '.', 'bad');
+}
+
+function divLine(label, x, p) {
+  const q = Math.floor(x / p), r = x % p;
+  if (r === 0) return label + ': <b>' + x + '</b> ÷ ' + p + ' = ' + q + ' <span class="okc">✔ exacta</span>';
+  if (x < p) return label + ': <b>' + x + '</b> ÷ ' + p + ' → ' + x + ' es menor que ' + p + ', no alcanza <span class="badc">✖ no es exacta</span>';
+  return label + ': <b>' + x + '</b> ÷ ' + p + ' = ' + q + ' y sobran ' + r + ' <span class="badc">✖ no es exacta</span>';
+}
+// El primo elegido no divide a los dos números: alerta grande con sirena y la razón
+function alertBadPrime(p, n, d) {
+  const a = n % p === 0, b = d % p === 0;
+  const why = !a && !b ? 'El ' + p + ' no divide exacto ni al numerador ni al denominador.'
+                       : 'El ' + p + ' sí divide exacto a ' + (a ? n : d) + ', pero no a ' + (a ? d : n) + '.';
+  const tip = a || b ? 'Si dividiéramos solo uno de los dos números, la fracción cambiaría de valor. Por eso el primo tiene que dividir <b>a los dos</b>.'
+                     : 'Para simplificar, el primo tiene que dividir <b>exacto</b> (sin que sobre nada) al numerador y al denominador.';
+  Sound.siren();
+  bigAlert({kind: 'bad', icon: '🚨', title: '¡El ' + p + ' no sirve!', lock: 900, btn: 'Entendido, intentar de nuevo',
+            html: '<p class="aline">' + divLine('Numerador', n, p) + '</p><p class="aline">' + divLine('Denominador', d, p) + '</p><p>' + why + '</p><p class="atip">' + tip + '</p>'});
+}
+// Dijo «ya no se puede» pero todavía se puede
+function alertEarly(n, d, hintP) {
+  Sound.siren();
+  bigAlert({kind: 'bad', icon: '🚨', title: '¡Todavía se puede simplificar!', lock: 900, btn: 'Entendido, seguir simplificando',
+            html: '<p>Mira: <b>' + n + '</b> y <b>' + d + '</b> todavía se pueden dividir entre el mismo número primo.</p>' +
+                  '<p class="atip">Antes de parar, prueba con 2, 3, 5, 7… hasta estar seguro de que ninguno divide a los dos.' + (hintP ? ' <br>Pista: prueba con el <b>' + hintP + '</b>.' : '') + '</p>'});
+}
+// Detectó bien que ya no se puede simplificar: alerta de victoria con la explicación
+function alertWin(cur) {
+  const f = x => x < 2 ? x + ' no tiene factores primos' : MathUtil.isPrime(x) ? x + ' es primo' : x + ' = ' + MathUtil.primeFactors(x).join(' × ');
+  const html = cur.d === 1
+    ? '<p class="aline">' + cur.n + ' ÷ 1 = <b>' + cur.n + '</b></p><p>El denominador llegó a <b>1</b>, así que el resultado es un número entero.</p><p class="atip">Un número entero ya no se puede simplificar.</p>'
+    : '<p class="aline">' + f(cur.n) + '</p><p class="aline">' + f(cur.d) + '</p>' +
+      '<p>' + (cur.n === 1 ? 'El numerador es 1 y ningún primo divide a 1.' : 'No tienen ningún número primo en común.') + '</p>' +
+      '<p class="atip">Como ningún primo divide a la vez al numerador y al denominador, <b>' + cur.n + '/' + cur.d + ' ya no se puede simplificar más</b>. A una fracción así se le llama <b>irreducible</b>.</p>';
+  Sound.win();
+  bigAlert({kind: 'win', icon: '🎉', title: '¡Muy bien, lo detectaste!', lock: 500, btn: 'Continuar ➜', html,
+            onClose: () => { const nx = document.getElementById('next'); if (nx) nx.focus(); }});
+}
+
+function chooseS(p) {
+  const G = App.game, S = G.s; if (G.locked || S.phase !== 'simp') return;
+  const cur = S.chain[S.chain.length - 1], a = cur.n % p === 0, b = cur.d % p === 0;
+  if (!(a && b)) {
+    S.er++; S.errs.sprime = (S.errs.sprime || 0) + 1; setM('');
+    return alertBadPrime(p, cur.n, cur.d);
+  }
+  cur.p = p; S.chain.push({n: cur.n / p, d: cur.d / p, p: 0}); S.hintP = null; Sound.beep(700, 0.08);
+  if (cur.d / p === 1) { S.phase = 'done'; renderS(); finalizeSimp(true, false); return alertWin(S.chain[S.chain.length - 1]); }
+  renderS('✔ ' + cur.n + ' ÷ ' + p + ' = ' + (cur.n / p) + ' y ' + cur.d + ' ÷ ' + p + ' = ' + (cur.d / p) + '. ¿Se puede seguir?', 'good');
+}
+
+function stopS() {
+  const G = App.game, S = G.s; if (G.locked || S.phase !== 'simp') return;
+  const cur = S.chain[S.chain.length - 1], g = MathUtil.gcd(cur.n, cur.d);
+  if (g > 1) {
+    S.er++; S.errs.early = (S.errs.early || 0) + 1; setM('');
+    return alertEarly(cur.n, cur.d, S.errs.early >= 2 ? MathUtil.spf(g) : 0);
+  }
+  S.phase = 'done'; renderS(); finalizeSimp(true, false); alertWin(cur);
+}
+
+function hintS() {
+  const G = App.game, q = G.qs[G.i], S = G.s; if (G.locked) return;
+  S.hn++;
+  if (S.phase === 'conv') return setM('💡 ' + q.w + ' × ' + q.d + ' = ' + (q.w * q.d) + '. Ahora suma el numerador ' + q.n + '.', 'tip');
+  const cur = S.chain[S.chain.length - 1], g = MathUtil.gcd(cur.n, cur.d);
+  if (g > 1) { S.hintP = MathUtil.spf(g); return renderS('💡 Prueba con el ' + S.hintP + ': divide a ' + cur.n + ' y a ' + cur.d + '.', 'tip'); }
+  setM('💡 Ningún número primo divide a la vez a ' + cur.n + ' y a ' + cur.d + ': ya no se puede simplificar.', 'tip');
+}
+
+function finalizeSimp(_ok, timedOut) {
+  const G = App.game, q = G.qs[G.i], S = G.s, $ = id => document.getElementById(id); if (G.locked) return;
+  const ms = Math.round(performance.now() - G.t0);
+  const leftFrac = G.timer ? Math.max(0, (G.deadline - performance.now()) / (G.limit * 1000)) : 0;
+  stopTimer(); G.locked = true; Music.setTension(0);
+  const ok = !timedOut && S.er <= 1 && S.hn <= 1;
+  let pts = 0;
+  if (ok) {
+    G.correct++; G.streak++; G.bestStreak = Math.max(G.bestStreak, G.streak);
+    const speed = G.timer ? Math.round(8 * leftFrac) : 0;
+    pts = Math.max(4, 10 + speed - 3 * S.hn - 2 * S.er) + (G.streak >= 5 ? 10 : G.streak >= 3 ? 5 : 0);
+  } else { G.streak = 0; pts = timedOut ? 0 : 2; }
+  if (timedOut) G.timeouts++;
+  G.points += pts;
+  const mainErr = timedOut ? 'timeout' : Object.keys(S.errs).sort((a, b) => S.errs[b] - S.errs[a])[0] || '';
+  const u = App.demo ? App.user : App.store.student(App.user.key);
+  if (!App.demo) App.store.upsertStudent({key: u.key, points: (u.points || 0) + pts, bestStreak: Math.max(u.bestStreak || 0, G.bestStreak), lastSeen: Date.now()});
+  if (!App.demo) App.store.addRecord({sk: u.key, g: u.group, st: u.id, ts: Date.now(), rd: G.rid, skill: 'simplify', lvl: q.level, kind: q.kind, w: q.w, n: q.n, d: q.d, shape: '',
+                       res: q.res.n + '/' + q.res.d, ok, ms, err: mainErr, errs: S.errs, er: S.er, hn: S.hn, to: !!timedOut, lim: G.timer ? G.limit : 0});
+  ok ? Sound.ok() : Sound.bad();
+  if (ok) popup('+' + pts);
+  const sol = MathUtil.simpSteps(q.N, q.d);
+  $('sch').innerHTML = simpPre(q) + chainHTML(timedOut ? sol.chain : S.chain, true);
+  $('spanel').innerHTML = ''; setM('');
+  $('pts').textContent = '⭐ ' + G.points; $('stk').textContent = '🔥 ' + G.streak;
+  const R = q.res, rtxt = R.d === 1 ? '<b>' + R.n + '</b>' : frac(R.n, R.d);
+  const msg = (ok ? '¡Muy bien! ' : timedOut ? '⏰ ¡Se acabó el tiempo! ' : 'Terminaste, pero con varios errores. ') +
+    (q.w > 0 ? q.w + ' ' + q.n + '/' + q.d + ' = ' + q.N + '/' + q.d + ' = ' : q.n + '/' + q.d + ' = ') + rtxt +
+    '<div class="small" style="margin-top:8px">' + (R.d === 1 ? 'El denominador llegó a 1: el resultado es un número entero.' : 'Ningún primo divide a la vez a ' + R.n + ' y a ' + R.d + ': es irreducible.') + '</div>';
+  const fb = $('fb'); fb.className = 'fb ' + (ok ? 'good' : 'bad');
+  fb.innerHTML = msg + '<div class="row"><button class="btn primary" id="next">' + (G.i + 1 >= G.qs.length ? 'Ver resultado' : 'Siguiente') + ' ➜</button></div>';
+  const next = () => { G.i++; G.i >= G.qs.length ? viewSummary() : viewQuestion(); };
+  $('next').onclick = next; $('next').focus();
+  App.keys = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); next(); } };
+}
+
+/* ---------- Modo clase: simplificación paso a paso ---------- */
+function viewClassSimp() {
+  App.keys = null;
+  const S = App.clsS = Object.assign({w: 2, n: 4, d: 8, s: 0, lvl: 2}, App.clsS || {});
+  mount('<div class="topbar"><h2>🧑‍🏫 Modo clase</h2><span><button class="btn sm" id="fs">⛶ Pantalla completa</button> <button class="btn sm" id="back">← Salir</button></span></div>' + classTabs('simp') +
+    '<div class="card"><div class="ctl" style="grid-template-columns:1fr 1fr 1fr 1.4fr 1fr">' +
+    '<div><label for="sw" style="margin-top:0">Entero (0 = ninguno)</label><input type="number" id="sw" min="0" max="99"></div>' +
+    '<div><label for="sn" style="margin-top:0">Numerador</label><input type="number" id="sn" min="1" max="999"></div>' +
+    '<div><label for="sd" style="margin-top:0">Denominador</label><input type="number" id="sd" min="2" max="999"></div>' +
+    '<div><label for="sl" style="margin-top:0">Nivel (aleatoria)</label><select id="sl"><option value="1">Nivel 1 · simples</option><option value="2">Nivel 2 · mixtas</option><option value="3">Nivel 3 · variado</option></select></div>' +
+    '<div style="align-self:end"><button class="btn" id="sr" style="width:100%">🎲 Aleatoria</button></div></div><div class="err" id="serr"></div></div>' +
+    '<div class="card"><div class="chain" id="sch" style="min-height:150px"></div>' +
+    '<p class="center muted" id="sexp" style="max-width:none;margin:10px auto 0;font-size:19px;min-height:28px"></p>' +
+    '<div class="row"><button class="btn" id="sprev">◀ Atrás</button><button class="btn primary" id="snext">Siguiente ▶</button><button class="btn" id="sall">Mostrar todo</button><button class="btn" id="srst">↺ Reiniciar</button></div>' +
+    '<p class="muted small center" style="max-width:none;margin:10px auto 0">Números primos: 2 · 3 · 5 · 7 · 11 · 13 …  |  Teclas: → o espacio = siguiente, ← = atrás</p></div>', true);
+  const $ = id => document.getElementById(id);
+  let q, sol, base, total;
+  const calc = () => { q = {w: S.w, n: S.n, d: S.d}; q.N = q.w * q.d + q.n; sol = MathUtil.simpSteps(q.N, q.d); base = q.w > 0 ? 1 : 0; total = base + 2 * sol.ps.length + 1; };
+  const paint = () => {
+    const fin = S.s === total, np = sol.ps.length;
+    let html = simpPre(q, 'xl', S.s >= base), t = 0;
+    if (S.s >= base) {
+      t = Math.min(S.s - base, 2 * np);
+      const shown = 1 + Math.floor(t / 2), ann = Math.ceil(t / 2);
+      html += chainHTML(sol.chain.slice(0, shown).map((c, i) => ({n: c.n, d: c.d, p: i < ann ? c.p : 0})), fin, 'xl');
+    }
+    $('sch').innerHTML = html;
+    const R = sol.res, p = sol.ps[Math.ceil(t / 2) - 1];
+    $('sexp').textContent = (q.w > 0 && S.s === 0) ? 'Es una fracción mixta: primero la convertimos en fracción impropia.'
+      : (q.w > 0 && S.s === 1) ? 'Multiplicamos ' + q.w + ' × ' + q.d + ' = ' + (q.w * q.d) + ' y sumamos ' + q.n + ': ' + q.N + '. El denominador pasa igual (' + q.d + ').'
+      : fin ? (R.d === 1 ? 'El denominador llegó a 1: el resultado es el número entero ' + R.n + '.' : 'Ya no se puede simplificar: ' + R.n + '/' + R.d + ' es irreducible.')
+      : t === 2 * np ? 'Revisamos los primos 2, 3, 5, 7…: ninguno divide a la vez al numerador y al denominador.'
+      : t % 2 === 1 ? 'El ' + p + ' divide igual al numerador y al denominador: dividimos arriba y abajo.'
+      : S.s === base ? 'Buscamos un primo que divida igual al numerador y al denominador.' : 'Nueva fracción. ¿Algún primo divide a los dos números?';
+    $('sprev').disabled = S.s === 0; $('snext').disabled = fin;
+  };
+  const load = (w, n, d) => { S.w = w; S.n = n; S.d = d; S.s = 0; $('sw').value = w; $('sn').value = n; $('sd').value = d; calc(); paint(); };
+  const parse = () => {
+    const w = parseInt($('sw').value || '0', 10), n = parseInt($('sn').value, 10), d = parseInt($('sd').value, 10);
+    if (!(w >= 0 && w <= 99 && n >= 1 && n <= 999 && d >= 2 && d <= 999)) return ($('serr').textContent = 'Entero de 0 a 99, numerador de 1 a 999 y denominador de 2 a 999.');
+    $('serr').textContent = ''; S.w = w; S.n = n; S.d = d; S.s = 0; calc(); paint();
+  };
+  const step = d => { S.s = Math.max(0, Math.min(total, S.s + d)); paint(); };
+  ['sw', 'sn', 'sd'].forEach(id => { $(id).addEventListener('input', parse); $(id).addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); } }); });
+  $('sl').value = S.lvl; $('sl').onchange = e => { S.lvl = +e.target.value; };
+  $('sr').onclick = () => { const L = Config.SIMP.LEVELS[S.lvl], k = pick(L.kinds), r = Content.makeSimp(S.lvl, null, k); load(r.w, r.n, r.d); };
+  $('snext').onclick = () => step(1); $('sprev').onclick = () => step(-1);
+  $('sall').onclick = () => { S.s = total; paint(); }; $('srst').onclick = () => { S.s = 0; paint(); };
+  App.keys = e => {
+    if (e.key === ' ' && e.target && e.target.tagName === 'BUTTON') return;
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); step(1); } else if (e.key === 'ArrowLeft') { e.preventDefault(); step(-1); }
+  };
+  $('tabfig').onclick = viewClass; $('tabmcm').onclick = viewClassMcm; $('tabadd').onclick = viewClassAdd; $('tabdemo').onclick = viewDemo;
+  $('fs').onclick = () => { try { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); } catch (e) { /* no disponible */ } };
+  $('back').onclick = () => { try { if (document.fullscreenElement) document.exitFullscreen(); } catch (e) { /* ignorar */ } viewLogin(); };
+  load(S.w, S.n, S.d);
+}
+
+const lastOf = c => c[c.length - 1];
+/* ---------- Reto Suma con distinto denominador ---------- */
+function addExprHTML(fr, cls, eq) {
+  return fr.map((f, i) => (i ? '<span class="eq">+</span>' : '') + (f.w > 0 ? fracMixed(f.w, f.n, f.d, cls || 'lg') : frac(f.n, f.d, cls || 'lg'))).join('') + (eq === false ? '' : '<span class="eq">=</span>');
+}
+const nbox = x => '<span class="nbox">' + x + '</span>';
+// Línea larga del pizarrón: numeradores arriba (sumando), una sola raya y el mcm debajo
+const longFrac = (nums, L) => '<span class="lfrac"><span class="ln">' + nums.join('<span class="eq" style="font-size:30px;margin:0">+</span>') + '</span><span class="ld"><small>mcm</small><span class="nbox">' + L + '</span></span></span>';
+const aIn = (id, w) => '<input type="number" inputmode="numeric" class="ain" id="' + id + '" style="width:' + (w || 84) + 'px">';
+const aTarget = A => (A.phase === 'res' ? A.res : A.fr[A.fi]);
+
+function viewAdd() {
+  const G = App.game, q = G.qs[G.i];
+  G.locked = false; G.t0 = performance.now(); G.limit = Config.TIME.addsub_unlike[G.level]; Music.setTension(G.timer ? 0 : 0.25);
+  G.a = {phase: 'simp', fi: 0, er: 0, hn: 0, errs: {}, hintP: null, m: null, mcm: 0, res: null,
+         fr: q.fr.map(f => ({w: f.w, n: f.n, d: f.d, phase: f.w > 0 ? 'conv' : 'simp', chain: f.w > 0 ? [] : [{n: f.n, d: f.d, p: 0}]}))};
+  const head = '<div class="topbar"><span class="pill">' + Config.SKILLS.addsub_unlike.icon + ' ' + Config.LEVELS[G.level].name + ' · Ejercicio ' + (G.i + 1) + ' de ' + G.qs.length + '</span>' +
+    '<span><span class="pill" id="pts">⭐ ' + G.points + '</span> <span class="pill" id="stk">🔥 ' + G.streak + '</span> <button class="btn" id="quit">Salir</button></span></div>' +
+    '<div class="bar"><i style="width:' + (G.i / G.qs.length * 100) + '%"></i></div>' +
+    (G.timer ? '<div class="tbar"><i id="tb"></i><span id="tt"></span></div>' : '');
+  mount(head + '<div class="card"><div class="prompt">Suma las fracciones</div><div class="chain" id="aexp" style="min-height:0"></div><div class="stps" id="asteps"></div>' +
+    '<div id="asec"></div><div class="mmsg" id="mmsg"></div><div class="fb hidden" id="fb"></div></div>', false, true);
+  document.getElementById('quit').onclick = () => askConfirm('¿Salir de la ronda?', exitGame, 'Sí, salir');
+  document.getElementById('aexp').innerHTML = addExprHTML(q.fr, 'lg', false);
+  App.keys = e => {
+    const A = G.a; if (G.locked) return; const n = parseInt(e.key, 10);
+    if (A.phase === 'simp' || A.phase === 'res') { if ([2, 3, 5, 7].includes(n)) aPrime(n); else if (e.key === '0') aStop(); }
+    else if (A.phase === 'mcm' && A.m.phase === 'div' && [2, 3, 5, 7].includes(n)) aMcmChoose(n);
+  };
+  renderA();
+  if (G.timer) startTimer(G);
+}
+
+function renderA(msg, kind) {
+  const G = App.game, q = G.qs[G.i], A = G.a, $ = id => document.getElementById(id);
+  const names = ['Simplificar', 'Calcular el mcm', 'Plantilla', 'Sumar'], cur = {simp: 0, mcm: 1, tmpl: 2, sum: 3, res: 3}[A.phase];
+  $('asteps').innerHTML = names.map((n, i) => '<span class="stp ' + (i < cur ? 'ok' : i === cur ? 'on' : '') + '">' + (i < cur ? '✔ ' : '') + 'Paso ' + (i + 1) + ': ' + n + '</span>').join('');
+  const dens = A.fr.map(f => lastOf(f.chain) ? lastOf(f.chain).d : f.d);
+  const redExpr = () => addExprHTML(A.fr.map(f => ({w: 0, n: lastOf(f.chain).n, d: lastOf(f.chain).d})), 'lg', false);
+  let h = '', p = '', hint = true;
+  const primePanel = (t, label) => '<p class="muted center" style="margin:6px 0 10px;max-width:none">' + label + '</p>' +
+    '<div class="pbtns">' + Config.SIMP.PRIMES.map(x => '<button class="pbtn' + (A.hintP === x ? ' hint' : '') + '" data-p="' + x + '">' + x + '</button>').join('') + '</div>' +
+    '<div class="row"><button class="btn ok sstop" id="astop">✋ Ya no se puede simplificar</button></div>';
+  if (A.phase === 'simp') {
+    A.fr.forEach((f, i) => {
+      if (i > A.fi) return;
+      const pre = f.w > 0 ? fracMixed(f.w, f.n, f.d, 'lg') + '<span class="eq">=</span>' : '';
+      h += '<div class="chain" style="min-height:70px">' + pre + (f.phase === 'conv'
+        ? '<span class="frac lg"><span class="n"><input type="number" class="ain" id="acin" inputmode="numeric" aria-label="Nuevo numerador"></span><span class="d">' + f.d + '</span></span>'
+        : chainHTML(f.chain, f.phase === 'done')) + '</div>';
+    });
+    const t = aTarget(A);
+    p = t.phase === 'conv' ? '<p class="muted center" style="max-width:none"><b>Fracción ' + (A.fi + 1) + ' de ' + A.fr.length + '.</b> Multiplica el entero por el denominador y suma el numerador. El denominador se queda igual.</p><div class="row"><button class="btn primary" id="achk">Comprobar ✔</button></div>'
+      : primePanel(t, '<b>Fracción ' + (A.fi + 1) + ' de ' + A.fr.length + '.</b> ¿Algún primo divide igual al numerador y al denominador? Si no, detecta que ya no se puede simplificar.');
+  } else if (A.phase === 'mcm') {
+    const M = A.m, last = M.rows[M.rows.length - 1];
+    h = '<div class="chain" style="min-height:60px">' + redExpr() + '</div><p class="prompt" style="font-size:20px;margin:4px 0">Calcula el mcm de <b>' + dens.join(', ') + '</b></p>' +
+        '<div class="mstage">' + mtableHTML(M.rows, M.divs, M.phase === 'fill' ? last.map(x => x > 1) : 0) + '</div>';
+    if (M.phase === 'div') p = '<p class="muted center" style="margin:0 0 10px;max-width:none"><b>Paso ' + (M.divs.length + 1) + '.</b> Elige el primo más pequeño que divide al menos a uno de los números.</p><div class="pbtns">' +
+        Config.MCM.PRIMES.map(x => '<button class="pbtn' + (M.hintP === x ? ' hint' : '') + '" data-p="' + x + '">' + x + '</button>').join('') + '</div>';
+    else if (M.phase === 'fill') p = '<p class="muted center" style="margin:0 0 10px;max-width:none">Dividiste entre <b>' + M.divs[M.divs.length - 1] + '</b>. Escribe la nueva fila: divide y <b>baja</b> los que no se pueden dividir.</p><div class="row"><button class="btn primary" id="achk">Comprobar ✔</button></div>';
+    else p = '<p class="muted center" style="margin:0 0 10px;max-width:none">¡Todos son 1! Multiplica los divisores.</p><div class="mformula">mcm = ' + M.divs.join(' × ') + ' = ' + aIn('aprod', 110) + '</div><div class="row"><button class="btn primary" id="achk">Comprobar ✔</button></div>';
+  } else if (A.phase === 'tmpl') {
+    h = '<div class="chain" style="min-height:90px">' + redExpr() + '<span class="eq">=</span>' + longFrac(A.fr.map((f, i) => aIn('tp' + i, 96)), A.mcm) + '</div>' +
+        '<div class="trow" style="font-size:20px;margin:2px 0 8px">Cada numerador: el mcm (<b>' + A.mcm + '</b>) <span class="op">÷</span> el denominador <span class="op">×</span> el numerador</div>';
+    p = '<div class="row"><button class="btn primary" id="achk">Comprobar ✔</button></div>';
+  } else if (A.phase === 'sum') {
+    h = '<div class="chain" style="min-height:90px">' + redExpr() + '<span class="eq">=</span>' + longFrac(q.sol.prods.map(nbox), A.mcm) + '<span class="eq">=</span>' +
+        '<span class="frac lg"><span class="n">' + aIn('asum', 120) + '</span><span class="d">' + A.mcm + '</span></span></div>';
+    p = '<p class="muted center" style="max-width:none">Ejecuta la suma de los numeradores y pasa el mcm (el denominador se queda igual).</p><div class="row"><button class="btn primary" id="achk">Comprobar ✔</button></div>';
+  } else if (A.phase === 'res') {
+    h = '<div class="chain" style="min-height:90px">' + redExpr() + '<span class="eq">=</span>' + longFrac(q.sol.prods.map(nbox), A.mcm) + '<span class="eq">=</span>' + chainHTML(A.res.chain, false) + '</div>';
+    p = primePanel(A.res, '<b>Resultado.</b> ¿Se puede simplificar? Déjalo como fracción impropia (no la conviertas a mixta).');
+  }
+  if (A.phase !== 'done') p += '<div class="row"><button class="btn sm" id="ahint">💡 Pista (-3 pts)</button></div>';
+  $('asec').innerHTML = h + p; setM(msg, kind);
+  document.querySelectorAll('#asec .pbtn').forEach(b => b.onclick = () => (A.phase === 'mcm' ? aMcmChoose(+b.dataset.p) : aPrime(+b.dataset.p)));
+  if ($('achk')) $('achk').onclick = aEnter;
+  if ($('astop')) $('astop').onclick = aStop;
+  if ($('ahint')) $('ahint').onclick = aHint;
+  document.querySelectorAll('#asec input').forEach(inp => inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); aEnter(); } }));
+  const f0 = document.querySelector('#asec input'); if (f0) f0.focus();
+}
+
+function aEnter() {
+  const G = App.game, A = G.a; if (G.locked) return;
+  if (A.phase === 'simp' && A.fr[A.fi].phase === 'conv') aConv();
+  else if (A.phase === 'mcm') { if (A.m.phase === 'fill') aMcmRow(); else if (A.m.phase === 'prod') aMcmProd(); }
+  else if (A.phase === 'tmpl') aTmpl();
+  else if (A.phase === 'sum') aSum();
+}
+
+function aConv() {
+  const A = App.game.a, f = A.fr[A.fi], v = parseInt(document.getElementById('acin').value, 10), N = f.w * f.d + f.n;
+  if (v === N) { f.phase = 'simp'; f.chain = [{n: N, d: f.d, p: 0}]; Sound.ok(); return renderA('✔ ' + f.w + ' × ' + f.d + ' + ' + f.n + ' = ' + N + '. Ahora revisa si se puede simplificar.', 'good'); }
+  A.er++; Sound.bad(); const t = v === f.w * f.d ? 'noadd' : 'conv'; A.errs[t] = (A.errs[t] || 0) + 1;
+  setM(t === 'noadd' ? '❌ Ya multiplicaste ' + f.w + ' × ' + f.d + ' = ' + (f.w * f.d) + '. Falta sumar el numerador.' : '❌ Revisa: primero multiplica ' + f.w + ' × ' + f.d + ' y después suma ' + f.n + '.', 'bad');
+}
+
+function aPrime(p) {
+  const G = App.game, A = G.a; if (G.locked || (A.phase !== 'simp' && A.phase !== 'res')) return;
+  const t = aTarget(A); if (t.phase !== 'simp') return;
+  const cur = lastOf(t.chain), a = cur.n % p === 0, b = cur.d % p === 0;
+  if (!(a && b)) { A.er++; A.errs.sprime = (A.errs.sprime || 0) + 1; setM(''); return alertBadPrime(p, cur.n, cur.d); }
+  cur.p = p; t.chain.push({n: cur.n / p, d: cur.d / p, p: 0}); A.hintP = null; Sound.beep(700, 0.08);
+  renderA('✔ ' + cur.n + ' ÷ ' + p + ' = ' + (cur.n / p) + ' y ' + cur.d + ' ÷ ' + p + ' = ' + (cur.d / p) + '. ¿Se puede seguir?', 'good');
+}
+
+function aStop() {
+  const G = App.game, A = G.a; if (G.locked || (A.phase !== 'simp' && A.phase !== 'res')) return;
+  const t = aTarget(A); if (t.phase !== 'simp') return;
+  const cur = lastOf(t.chain), g = MathUtil.gcd(cur.n, cur.d);
+  if (g > 1) { A.er++; A.errs.early = (A.errs.early || 0) + 1; setM(''); return alertEarly(cur.n, cur.d, A.errs.early >= 2 ? MathUtil.spf(g) : 0); }
+  t.phase = 'done'; A.hintP = null; Sound.ok();
+  if (A.phase === 'res') return finalizeAdd(false);
+  const why = '✔ ' + cur.n + '/' + cur.d + ': ningún primo divide a la vez a ' + cur.n + ' y a ' + cur.d + '.';
+  if (++A.fi < A.fr.length) return renderA(why, 'good');
+  A.phase = 'mcm'; A.m = {rows: [A.fr.map(f => lastOf(f.chain).d)], divs: [], phase: 'div', rowErr: 0, hintP: null};
+  renderA('✔ Paso 1 completo. Ahora calcula el mcm de los denominadores.', 'good');
+}
+
+function aMcmChoose(p) {
+  const G = App.game, A = G.a, M = A.m; if (G.locked || A.phase !== 'mcm' || M.phase !== 'div') return;
+  const last = M.rows[M.rows.length - 1];
+  if (!last.some(x => x > 1 && x % p === 0)) { A.er++; A.errs.prime = (A.errs.prime || 0) + 1; Sound.bad(); return setM('❌ ' + p + ' no divide a ninguno de los números de la fila. Prueba con otro primo.', 'bad'); }
+  const small = MathUtil.smallestDivisor(last);
+  M.divs.push(p); M.phase = 'fill'; M.hintP = null; M.rowErr = 0;
+  renderA(p !== small ? 'Funciona, pero normalmente empezamos con el primo más pequeño (' + small + ').' : '', 'tip');
+}
+function aMcmRow() {
+  const G = App.game, A = G.a, M = A.m, last = M.rows[M.rows.length - 1], p = M.divs[M.divs.length - 1], exp = MathUtil.nextRow(last, p), wrong = [];
+  exp.forEach((v, i) => { if (v === null) return; const el = document.getElementById('mi' + i), s = el.value.trim(), ok = s !== '' && parseInt(s, 10) === v; el.classList.toggle('bad', !ok); el.classList.toggle('good', ok); if (!ok) wrong.push(i); });
+  if (!wrong.length) { M.rows.push(exp); M.phase = MathUtil.rowDone(exp) ? 'prod' : 'div'; M.rowErr = 0; Sound.ok(); return renderA('✔ ¡Bien!', 'good'); }
+  A.er++; M.rowErr++; Sound.bad();
+  const types = new Set(wrong.map(i => (last[i] % p === 0 ? 'div' : 'down'))); types.forEach(t => { A.errs[t] = (A.errs[t] || 0) + 1; });
+  let msg = types.has('down') ? '❌ Si un número no se puede dividir entre ' + p + ', se baja igual.' : '❌ Revisa la división en las casillas rojas.';
+  if (M.rowErr >= 2) msg += ' Ayuda: ' + last.filter(x => x > 1).map(x => (x % p === 0 ? x + ' ÷ ' + p + ' = ' + (x / p) : x + ' se baja')).join(' · ');
+  setM(msg, 'bad');
+}
+function aMcmProd() {
+  const A = App.game.a, M = A.m, prod = M.divs.reduce((a, b) => a * b, 1), v = parseInt(document.getElementById('aprod').value, 10);
+  if (v === prod) { A.mcm = prod; A.phase = 'tmpl'; Sound.ok(); return renderA('✔ mcm = ' + prod + '. Ahora la plantilla: ÷ el denominador y × el numerador.', 'good'); }
+  A.er++; A.errs.mult = (A.errs.mult || 0) + 1; Sound.bad(); setM('❌ Multiplica solo los divisores: ' + M.divs.join(' × ') + '. Hazlo de dos en dos.', 'bad');
+}
+
+function aTmpl() {
+  const G = App.game, A = G.a, q = G.qs[G.i]; let bad = 0; const kinds = new Set();
+  A.fr.forEach((f, i) => {
+    const fc = q.sol.facs[i], pr = q.sol.prods[i], el = document.getElementById('tp' + i), raw = el.value.trim(), v = parseInt(raw, 10), ok = raw !== '' && v === pr;
+    el.classList.toggle('bad', !ok); el.classList.toggle('good', ok);
+    if (!ok) { bad++; kinds.add(v === fc && fc !== pr ? 'mult2' : 'factor'); }
+  });
+  if (!bad) { A.phase = 'sum'; Sound.ok(); return renderA('✔ ¡Numeradores correctos! Ahora ejecuta la suma.', 'good'); }
+  A.er++; Sound.bad(); kinds.forEach(k => { A.errs[k] = (A.errs[k] || 0) + 1; });
+  setM(kinds.has('factor') ? '❌ Revisa las casillas rojas: divide el mcm (' + A.mcm + ') entre el denominador y el resultado multiplícalo por el numerador.' : '❌ Ya dividiste el mcm entre el denominador; ahora multiplica por el numerador.', 'bad');
+}
+function aSum() {
+  const G = App.game, A = G.a, q = G.qs[G.i], v = parseInt(document.getElementById('asum').value, 10);
+  if (v === q.sol.T) { A.phase = 'res'; A.res = {phase: 'simp', chain: [{n: q.sol.T, d: A.mcm, p: 0}]}; Sound.ok(); return renderA('✔ ' + q.sol.prods.join(' + ') + ' = ' + q.sol.T + '. Por último, ¿se puede simplificar?', 'good'); }
+  A.er++; A.errs.sum = (A.errs.sum || 0) + 1; Sound.bad(); setM('❌ Revisa la suma de los numeradores: ' + q.sol.prods.map(() => '▢').join(' + ') + '.', 'bad');
+}
+
+function aHint() {
+  const G = App.game, q = G.qs[G.i], A = G.a; if (G.locked) return; A.hn++;
+  if (A.phase === 'simp' || A.phase === 'res') {
+    const t = aTarget(A);
+    if (t.phase === 'conv') return setM('💡 ' + t.w + ' × ' + t.d + ' = ' + (t.w * t.d) + '. Ahora suma el numerador ' + t.n + '.', 'tip');
+    const cur = lastOf(t.chain), g = MathUtil.gcd(cur.n, cur.d);
+    if (g > 1) { A.hintP = MathUtil.spf(g); return renderA('💡 Prueba con el ' + A.hintP + ': divide a ' + cur.n + ' y a ' + cur.d + '.', 'tip'); }
+    return setM('💡 Ningún primo divide a la vez a ' + cur.n + ' y a ' + cur.d + ': ya no se puede simplificar.', 'tip');
+  }
+  if (A.phase === 'mcm') {
+    const M = A.m, last = M.rows[M.rows.length - 1];
+    if (M.phase === 'div') { M.hintP = MathUtil.smallestDivisor(last); return renderA('💡 Prueba con el ' + M.hintP + ': divide al menos a uno de los números.', 'tip'); }
+    if (M.phase === 'fill') { const p = M.divs[M.divs.length - 1]; return setM('💡 ' + last.filter(x => x > 1).map(x => (x % p === 0 ? x + ' ÷ ' + p + ' = ' + (x / p) : x + ' no se divide: se baja')).join(' · '), 'tip'); }
+    return setM('💡 Multiplica de dos en dos: ' + M.divs[0] + ' × ' + M.divs[1] + ' = ' + (M.divs[0] * M.divs[1]) + (M.divs.length > 2 ? ', y ese resultado × ' + M.divs[2] + '…' : ''), 'tip');
+  }
+  if (A.phase === 'tmpl') { const i = A.fr.findIndex((f, k) => parseInt(document.getElementById('tp' + k).value, 10) !== q.sol.prods[k]), k = i < 0 ? 0 : i;
+    return setM('💡 Fracción ' + (k + 1) + ': ' + A.mcm + ' ÷ ' + q.sol.dens[k] + ' = ' + q.sol.facs[k] + '. Ahora ' + q.sol.facs[k] + ' × ' + q.sol.red[k].n + '.', 'tip'); }
+  setM('💡 Suma: ' + q.sol.prods.join(' + ') + '. Solo se suman los numeradores.', 'tip');
+}
+
+function solHTML(q) {
+  const S = q.sol, R = S.res, L = S.mcm;
+  const line = t => '<p class="aline" style="margin:6px 0;font-size:20px">' + t + '</p>';
+  return line('<b>Paso 1</b> · ' + addExprHTML(S.red.map(r => ({w: 0, n: r.n, d: r.d})), 'lg', false)) +
+         line('<b>Paso 2</b> · mcm de ' + S.dens.join(', ') + ' = <b>' + L + '</b>') +
+         line('<b>Paso 3</b> · ' + S.red.map((r, i) => L + '÷' + r.d + '×' + r.n + '=' + S.prods[i]).join(' · ') + '<br>' + addExprHTML(S.red.map(r => ({w: 0, n: r.n, d: r.d})), 'lg') + longFrac(S.prods.map(nbox), L)) +
+         line('<b>Paso 4</b> · ' + S.prods.join(' + ') + ' = ' + S.T + ' &nbsp;→&nbsp; ' + chainHTML(MathUtil.simpSteps(S.T, L).chain, true));
+}
+
+function finalizeAdd(timedOut) {
+  const G = App.game, q = G.qs[G.i], A = G.a, $ = id => document.getElementById(id); if (G.locked) return;
+  const ms = Math.round(performance.now() - G.t0);
+  const leftFrac = G.timer ? Math.max(0, (G.deadline - performance.now()) / (G.limit * 1000)) : 0;
+  stopTimer(); G.locked = true; Music.setTension(0);
+  const ok = !timedOut && A.er <= 2 && A.hn <= 2;
+  let pts = 0;
+  if (ok) {
+    G.correct++; G.streak++; G.bestStreak = Math.max(G.bestStreak, G.streak);
+    pts = Math.max(8, 20 + (G.timer ? Math.round(15 * leftFrac) : 0) - 3 * A.hn - 2 * A.er) + (G.streak >= 5 ? 10 : G.streak >= 3 ? 5 : 0);
+  } else { G.streak = 0; pts = timedOut ? 0 : 3; }
+  if (timedOut) G.timeouts++;
+  G.points += pts;
+  const mainErr = timedOut ? 'timeout' : Object.keys(A.errs).sort((a, b) => A.errs[b] - A.errs[a])[0] || '';
+  const u = App.demo ? App.user : App.store.student(App.user.key);
+  if (!App.demo) App.store.upsertStudent({key: u.key, points: (u.points || 0) + pts, bestStreak: Math.max(u.bestStreak || 0, G.bestStreak), lastSeen: Date.now()});
+  if (!App.demo) App.store.addRecord({sk: u.key, g: u.group, st: u.id, ts: Date.now(), rd: G.rid, skill: 'addsub_unlike', lvl: q.level, ex: q.key, mcm: q.sol.mcm, n: null, d: null, shape: '',
+                       res: q.sol.res.n + '/' + q.sol.res.d, ok, ms, err: mainErr, errs: A.errs, er: A.er, hn: A.hn, to: !!timedOut, lim: G.timer ? G.limit : 0});
+  ok ? Sound.ok() : Sound.bad();
+  if (ok) popup('+' + pts);
+  $('asteps').innerHTML = ''; $('asec').innerHTML = solHTML(q); setM('');
+  $('pts').textContent = '⭐ ' + G.points; $('stk').textContent = '🔥 ' + G.streak;
+  const fb = $('fb'); fb.className = 'fb ' + (ok ? 'good' : 'bad');
+  fb.innerHTML = (ok ? '¡Excelente! ' : timedOut ? '⏰ ¡Se acabó el tiempo! Así se resolvía. ' : 'Terminaste, pero con varios errores. ') + 'Resultado: ' + frac(q.sol.res.n, q.sol.res.d) +
+    '<div class="row"><button class="btn primary" id="next">' + (G.i + 1 >= G.qs.length ? 'Ver resultado' : 'Siguiente') + ' ➜</button></div>';
+  const next = () => { G.i++; G.i >= G.qs.length ? viewSummary() : viewQuestion(); };
+  $('next').onclick = next; $('next').focus();
+  App.keys = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); next(); } };
+}
+
+/* ---------- Modo clase: suma con distinto denominador ---------- */
+function viewClassAdd() {
+  App.keys = null;
+  const S = App.clsA = Object.assign({fr: [{w: 1, n: 1, d: 2}, {w: 2, n: 1, d: 4}, {w: 1, n: 1, d: 6}], s: 0, lvl: 3}, App.clsA || {});
+  const row = i => '<div class="row left" style="margin:4px 0"><b style="width:90px">Fracción ' + (i + 1) + '</b>' +
+    '<input type="number" id="aw' + i + '" placeholder="entero" min="0" max="99" style="width:100px"> <input type="number" id="an' + i + '" placeholder="numerador" min="1" max="999" style="width:120px"> ' +
+    '<input type="number" id="ad' + i + '" placeholder="denominador" min="2" max="99" style="width:130px"></div>';
+  mount('<div class="topbar"><h2>🧑‍🏫 Modo clase</h2><span><button class="btn sm" id="fs">⛶ Pantalla completa</button> <button class="btn sm" id="back">← Salir</button></span></div>' + classTabs('add') +
+    '<div class="card">' + row(0) + row(1) + row(2) +
+    '<div class="row left"><label for="al" style="margin:0">Nivel (aleatoria)</label><select id="al" style="width:auto"><option value="1">Nivel 1 · 2 propias</option><option value="2">Nivel 2 · 2 mixtas</option><option value="3">Nivel 3 · 3 variadas</option></select>' +
+    '<button class="btn" id="ar">🎲 Aleatoria</button></div><div class="err" id="aerr"></div></div>' +
+    '<div class="card"><div id="astage"></div><p class="center muted" id="aexp2" style="max-width:none;margin:10px auto 0;font-size:19px;min-height:28px"></p>' +
+    '<div class="row"><button class="btn" id="aprev">◀ Atrás</button><button class="btn primary" id="anext">Siguiente ▶</button><button class="btn" id="aall">Mostrar todo</button><button class="btn" id="arst">↺ Reiniciar</button></div>' +
+    '<p class="muted small center" style="max-width:none;margin:10px auto 0">Teclas: → o espacio = siguiente, ← = atrás</p></div>', true);
+  const $ = id => document.getElementById(id), total = 4;
+  let frs, sol;
+  const calc = () => { frs = S.fr.filter(f => f.n >= 1 && f.d >= 2); sol = Content.solveAdd(frs); };
+  const paint = () => {
+    const s = S.s, L = sol.mcm, T = MathUtil.mcmTable(sol.dens); let h = '<div class="chain" style="min-height:70px">' + addExprHTML(frs, 'lg', false) + '</div>';
+    if (s >= 1) h += '<p class="aline" style="font-size:20px;margin:6px 0"><b>Paso 1 · Simplificar</b></p>' + frs.map(f => '<div class="chain" style="min-height:60px">' +
+      (f.w > 0 ? fracMixed(f.w, f.n, f.d, 'lg') + '<span class="eq">=</span>' : '') + chainHTML(MathUtil.simpSteps(f.w * f.d + f.n, f.d).chain, true) + '</div>').join('');
+    if (s >= 2) h += '<p class="aline" style="font-size:20px;margin:6px 0"><b>Paso 2 · mcm de ' + sol.dens.join(', ') + '</b></p><div class="mstage">' + mtableHTML(T.rows, T.divs, 0) + '</div><p class="center" style="font-size:26px;font-weight:800;margin:4px 0">' + T.divs.join(' × ') + ' = ' + L + '</p>';
+    if (s >= 3) h += '<p class="aline" style="font-size:20px;margin:6px 0"><b>Paso 3 · Plantilla</b> &nbsp; <span class="op">÷</span> el denominador &nbsp; <span class="op">×</span> el numerador</p>' +
+      sol.red.map((r, i) => '<div class="trow">' + frac(r.n, r.d, 'lg') + '<span class="eq">→</span>' + L + ' <span class="op">÷</span> ' + r.d + ' = <b>' + sol.facs[i] + '</b> <span class="op">×</span> ' + r.n + ' = <b>' + sol.prods[i] + '</b></div>').join('') +
+      '<div class="chain" style="min-height:90px">' + addExprHTML(sol.red.map(r => ({w: 0, n: r.n, d: r.d})), 'lg') + longFrac(sol.prods.map(nbox), L) + '</div>';
+    if (s >= 4) h += '<p class="aline" style="font-size:20px;margin:6px 0"><b>Paso 4 · Sumar</b></p><div class="chain" style="min-height:90px">' + longFrac(sol.prods.map(nbox), L) + '<span class="eq">=</span>' + chainHTML(MathUtil.simpSteps(sol.T, L).chain, true) + '</div>';
+    $('astage').innerHTML = h;
+    $('aexp2').textContent = ['Problema: sumar fracciones con distinto denominador. Primero simplificamos, luego mcm y plantilla.',
+      'Convertimos las mixtas a impropias (entero × denominador + numerador) y simplificamos por primos si se puede.',
+      'El mcm de los denominadores será el denominador común.',
+      'Una sola línea: el mcm abajo y arriba cada numerador nuevo = (mcm ÷ denominador) × numerador.',
+      'Ejecutamos la suma de los numeradores y pasamos el mcm. Se deja como fracción impropia' + (sol.T !== sol.res.n ? ', simplificada por primos.' : '.')][s];
+    $('aprev').disabled = s === 0; $('anext').disabled = s === total;
+  };
+  const fill = () => { for (let i = 0; i < 3; i++) { const f = S.fr[i]; $('aw' + i).value = f && f.n ? f.w : ''; $('an' + i).value = f ? f.n : ''; $('ad' + i).value = f ? f.d : ''; } };
+  const parse = () => {
+    const fr = [];
+    for (let i = 0; i < 3; i++) { const w = parseInt($('aw' + i).value || '0', 10), n = parseInt($('an' + i).value, 10), d = parseInt($('ad' + i).value, 10);
+      if ($('an' + i).value === '' && $('ad' + i).value === '') continue;
+      if (!(w >= 0 && w <= 99 && n >= 1 && n <= 999 && d >= 2 && d <= 99)) return ($('aerr').textContent = 'Fracción ' + (i + 1) + ': entero de 0 a 99, numerador de 1 a 999, denominador de 2 a 99.');
+      fr.push({w, n, d}); }
+    if (fr.length < 2) return ($('aerr').textContent = 'Escribe al menos 2 fracciones.');
+    const l = MathUtil.lcmAll(fr.map(f => MathUtil.simpSteps(f.w * f.d + f.n, f.d).res.d));
+    if (l > 500) return ($('aerr').textContent = 'El mcm sale muy grande (' + l + '). Usa denominadores más chicos.');
+    $('aerr').textContent = ''; S.fr = fr; S.s = 0; calc(); paint();
+  };
+  const step = d => { S.s = Math.max(0, Math.min(total, S.s + d)); paint(); };
+  for (let i = 0; i < 3; i++) ['aw', 'an', 'ad'].forEach(p => { $(p + i).addEventListener('input', parse); $(p + i).addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); } }); });
+  $('al').value = S.lvl; $('al').onchange = e => { S.lvl = +e.target.value; };
+  $('ar').onclick = () => { const q = Content.makeAdd(S.lvl, null); S.fr = q.fr.map(f => ({w: f.w, n: f.n, d: f.d})); S.s = 0; fill(); calc(); paint(); };
+  $('anext').onclick = () => step(1); $('aprev').onclick = () => step(-1);
+  $('aall').onclick = () => { S.s = total; paint(); }; $('arst').onclick = () => { S.s = 0; paint(); };
+  App.keys = e => {
+    if (e.key === ' ' && e.target && e.target.tagName === 'BUTTON') return;
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); step(1); } else if (e.key === 'ArrowLeft') { e.preventDefault(); step(-1); }
+  };
+  $('tabfig').onclick = viewClass; $('tabmcm').onclick = viewClassMcm; $('tabsimp').onclick = viewClassSimp; $('tabdemo').onclick = viewDemo;
+  $('fs').onclick = () => { try { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); } catch (e) { /* no disponible */ } };
+  $('back').onclick = () => { try { if (document.fullscreenElement) document.exitFullscreen(); } catch (e) { /* ignorar */ } viewLogin(); };
+  fill(); calc(); paint();
+}
+
+/* ---------- Modo clase: MCM paso a paso ---------- */
+function classTabs(active) {
+  return '<div class="shapes" style="margin-bottom:8px"><button class="shp' + (active === 'fig' ? ' on' : '') + '" id="tabfig">🍕 Figuras y fracciones</button>' +
+         '<button class="shp' + (active === 'mcm' ? ' on' : '') + '" id="tabmcm">🧮 Mínimo común múltiplo</button>' +
+         '<button class="shp' + (active === 'simp' ? ' on' : '') + '" id="tabsimp">✂️ Simplificación</button>' +
+         '<button class="shp' + (active === 'add' ? ' on' : '') + '" id="tabadd">🏁 Suma</button>' +
+         '<button class="shp" id="tabdemo">🎮 Jugar como alumnos</button></div>';
+}
+
+function viewClassMcm() {
+  App.keys = null;
+  const S = App.clsM = Object.assign({nums: [2, 4, 6], s: 0, lvl: 2}, App.clsM || {});
+  mount('<div class="topbar"><h2>🧑‍🏫 Modo clase</h2><span><button class="btn sm" id="fs">⛶ Pantalla completa</button> <button class="btn sm" id="back">← Salir</button></span></div>' + classTabs('mcm') +
+    '<div class="card"><div class="ctl" style="grid-template-columns:2fr 1fr 1fr"><div><label for="mn" style="margin-top:0">Números (de 2 a 5, separados por coma)</label>' +
+    '<input type="text" id="mn" autocomplete="off" style="font-size:26px;font-weight:800;text-align:center"></div>' +
+    '<div><label for="ml" style="margin-top:0">Nivel (aleatoria)</label><select id="ml"><option value="1">Nivel 1 · 2 números</option><option value="2">Nivel 2 · 3-4 números</option><option value="3">Nivel 3 · 5 números</option></select></div>' +
+    '<div style="align-self:end"><button class="btn" id="mr" style="width:100%">🎲 Aleatoria</button></div></div><div class="err" id="merr"></div></div>' +
+    '<div class="card"><div class="stage" id="mt"></div><div id="mline" class="mformula big"></div>' +
+    '<p class="center muted" id="mexp" style="max-width:none;margin:10px auto 0;font-size:19px;min-height:28px"></p>' +
+    '<div class="row"><button class="btn" id="mprev">◀ Atrás</button><button class="btn primary" id="mnext">Siguiente ▶</button><button class="btn" id="mall">Mostrar todo</button><button class="btn" id="mrst">↺ Reiniciar</button></div>' +
+    '<p class="muted small center" style="max-width:none;margin:10px auto 0">Números primos: 2 · 3 · 5 · 7 · 11 · 13 · 17 · 19 …  |  Teclas: → o espacio = siguiente, ← = atrás</p></div>', true);
+  const $ = id => document.getElementById(id);
+  let T = MathUtil.mcmTable(S.nums), total = 2 * T.divs.length + 1;   // etapas 0 … total
+  const paint = () => {
+    const rowsShown = Math.floor(S.s / 2) + 1, divsShown = Math.ceil(S.s / 2), fin = S.s === total;
+    $('mt').innerHTML = mtableHTML(T.rows.slice(0, rowsShown), T.divs.slice(0, divsShown), 0, true);
+    $('mline').innerHTML = fin ? 'mcm → ' + T.divs.join(' × ') + ' = <span style="border:3px solid var(--ink);border-radius:8px;padding:0 12px">' + T.mcm + '</span>' : '';
+    const p = T.divs[Math.ceil(S.s / 2) - 1];
+    $('mexp').textContent = S.s === 0 ? 'Escribimos los números en una fila y buscamos el primo más pequeño que divide al menos a uno de ellos.'
+      : fin ? 'Cuando todos son 1 terminamos: el mcm es el producto de los divisores.'
+      : S.s % 2 === 1 ? 'Dividimos entre ' + p + ': los que se pueden dividir se dividen y los demás se bajan.'
+      : 'Nueva fila. Si todavía hay números mayores que 1, buscamos otro primo.';
+    $('mprev').disabled = S.s === 0; $('mnext').disabled = fin;
+  };
+  const load = nums => { S.nums = nums; S.s = 0; T = MathUtil.mcmTable(nums); total = 2 * T.divs.length + 1; $('mn').value = nums.join(', '); paint(); };
+  const parse = () => {
+    const parts = $('mn').value.split(/[,;\s]+/).filter(Boolean), nums = parts.map(Number);
+    if (parts.length < 2 || parts.length > 5) return ($('merr').textContent = 'Escribe de 2 a 5 números.');
+    if (!nums.every(n => Number.isInteger(n) && n >= 2 && n <= 999)) return ($('merr').textContent = 'Usa números enteros del 2 al 999.');
+    $('merr').textContent = ''; S.nums = nums; S.s = 0; T = MathUtil.mcmTable(nums); total = 2 * T.divs.length + 1; paint();
+  };
+  const step = d => { S.s = Math.max(0, Math.min(total, S.s + d)); paint(); };
+  $('mn').addEventListener('input', parse);
+  $('ml').value = S.lvl; $('ml').onchange = e => { S.lvl = +e.target.value; };
+  $('mr').onclick = () => load(Content.makeMcm(S.lvl).nums.slice().sort((a, b) => a - b));
+  $('mnext').onclick = () => step(1); $('mprev').onclick = () => step(-1);
+  $('mall').onclick = () => { S.s = total; paint(); }; $('mrst').onclick = () => { S.s = 0; paint(); };
+  $('mn').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); } });
+  App.keys = e => {
+    if (e.key === ' ' && e.target && e.target.tagName === 'BUTTON') return;   // el botón enfocado ya reacciona a la barra espaciadora
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); step(1); } else if (e.key === 'ArrowLeft') { e.preventDefault(); step(-1); }
+  };
+  $('tabfig').onclick = viewClass; $('tabsimp').onclick = viewClassSimp; $('tabadd').onclick = viewClassAdd; $('tabdemo').onclick = viewDemo;
+  $('fs').onclick = () => { try { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); } catch (e) { /* no disponible */ } };
+  $('back').onclick = () => { try { if (document.fullscreenElement) document.exitFullscreen(); } catch (e) { /* ignorar */ } viewLogin(); };
+  load(S.nums);
+}
+
+/* ---------- Zona docente ---------- */
+function viewTeacher() {
+  App.keys = null;
+  const groups = [...new Set(App.store.students().map(s => s.group))].sort();
+  const sel = App.teacherGroup || '';
+  const rows = App.store.students().filter(s => !sel || s.group === sel)
+    .sort((a, b) => a.group.localeCompare(b.group) || a.id - b.id).map(s => {
+      const recs = App.store.records(r => r.sk === s.key), sk = Analytics.bySkill(recs), al = Analytics.alerts(recs), S = Analytics.summary(recs);
+      const tot = recs.length ? pct(S.acc) : '—';
+      const badges = recs.length < Config.ALERTS.minAttempts ? '<span class="muted small">Pocos datos</span>'
+        : (al.length ? al.map(a => '<span class="badge ' + a.level + '" title="' + esc(a.text) + '">' + esc(a.text) + '</span>').join('') : '<span class="badge ok">Sin alertas</span>');
+      return '<tr class="st" data-k="' + esc(s.key) + '"><td>' + esc(s.group) + '</td><td>' + s.id + '</td><td>' + (s.name ? esc(s.name) : '<span class="muted">—</span>') + '</td><td>' + recs.length + '</td><td>' + tot + '</td>' +
+        '<td>' + (sk.identify ? pct(sk.identify.acc) : '—') + '</td><td>' + (sk.color ? pct(sk.color.acc) : '—') + '</td><td>' + (sk.mcm ? pct(sk.mcm.acc) : '—') + '</td><td>' + (sk.simplify ? pct(sk.simplify.acc) : '—') + '</td><td>' + (sk.addsub_unlike ? pct(sk.addsub_unlike.acc) : '—') + '</td><td>' + (recs.length ? secs(S.avgMs) : '—') + '</td><td>' + (s.points || 0) + '</td><td>' + fmtDate(s.lastSeen) + '</td><td>' + badges + '</td></tr>';
+    }).join('');
+  const planned = Object.keys(Config.SKILLS).filter(k => !Config.SKILLS[k].active).map(k => Config.SKILLS[k].icon + ' ' + Config.SKILLS[k].name).join(' · ');
+  const rg = sel || Prefs.get('lastGroup', '') || groups[0] || '', nS = App.store.students().length, nR = App.store.records().length;
+  mount('<div class="topbar"><h2>Zona docente</h2><span><button class="btn" id="cls">🧑‍🏫 Modo clase</button> ' + (Cloud.on ? '<button class="btn" id="rfr">🔄 Actualizar</button> <button class="btn" id="tout">Cerrar sesión (' + esc((Cloud.T || {}).email || '') + ')</button> ' : '') + '<button class="btn" id="back">← Volver</button></span></div>' +
+    (Cloud.on ? groupsCard() + groupSummary(sel) : '') +
+    (App.store.persistent ? '' : '<div class="card" style="background:#fef3c7">Este navegador no permite guardar datos; el progreso se perderá al cerrar. Abre el archivo desde una carpeta del equipo.</div>') +
+    '<div class="card"><h3>👥 Lista de alumnos</h3>' +
+    '<p class="muted small" style="max-width:none">Pega o escribe un alumno por renglón: <b>Nombre</b> (se numera en orden), o <b>3. Nombre</b> si quieres fijar el número de lista. También puedes cargar un archivo .txt o .csv (<i>grupo;número;nombre</i>). Si el alumno ya existe, conserva sus puntos y resultados.' + (Cloud.on ? ' <b>Los nombres se guardan solo en este equipo, nunca en la nube.</b>' : '') + '</p>' +
+    '<div class="row left" style="margin:0 0 8px"><label for="rgrp" style="margin:0">Grupo</label><input type="text" id="rgrp" maxlength="6" style="width:110px" value="' + esc(rg) + '" placeholder="1F"> ' +
+    '<button class="btn" id="rload">📂 Cargar archivo</button><input type="file" id="rfile" accept=".txt,.csv,text/plain,text/csv" class="hidden"></div>' +
+    '<textarea id="rtxt" rows="7" style="width:100%;font-size:17px;padding:10px;border:2px solid var(--line);border-radius:12px;font-family:inherit" placeholder="1. Ana Pérez&#10;2. Luis Gómez&#10;…"></textarea>' +
+    '<div class="err" id="rerr"></div><div class="row left"><button class="btn primary" id="rsave">Guardar lista</button></div></div>' +
+    '<div class="card"><div class="row left" style="margin:0 0 10px">' +
+    '<span class="pill" id="savedpill">' + (Cloud.on ? '☁️ Nube · ' : '💾 Guardado automático · ') + nS + ' alumnos · ' + nR + ' resultados' + (App.store.savedAt ? ' · ' + new Date(App.store.savedAt).toLocaleTimeString('es-MX', {hour: '2-digit', minute: '2-digit'}) : '') + '</span>' +
+    '<select id="gsel" style="width:auto"><option value="">Todos los grupos</option>' + groups.map(g => '<option' + (g === sel ? ' selected' : '') + '>' + esc(g) + '</option>').join('') + '</select>' +
+    '<button class="btn" id="ej">Exportar JSON</button><button class="btn" id="ec">Exportar CSV</button>' +
+    '<button class="btn" id="imp">Importar JSON</button><input type="file" id="file" accept=".json" class="hidden">' +
+    '<button class="btn" id="clr" style="color:var(--bad)">Borrar todo</button></div>' +
+    '<div class="scroll"><table><thead><tr><th>Grupo</th><th>Lista</th><th>Nombre</th><th>Intentos</th><th>Aciertos</th><th>Identifica</th><th>Colorea</th><th>MCM</th><th>Simplifica</th><th>Suma</th><th>Tiempo prom.</th><th>Puntos</th><th>Última vez</th><th>Alertas tempranas</th></tr></thead><tbody>' +
+    (rows || '<tr><td colspan="14" class="muted">Aún no hay alumnos registrados.</td></tr>') + '</tbody></table></div>' +
+    '<p class="muted small">Toca un alumno para ver el detalle por denominador, figura, nivel y tipos de error frecuentes. ' + (Cloud.on ? 'Los resultados de todos los dispositivos se reúnen solos en la nube; usa «Actualizar» para traer lo más reciente.' : 'Para reunir datos de varias computadoras: exporta JSON en cada una e impórtalos aquí.') + '</p></div>' +
+    '<div id="detail"></div>' +
+    '<div class="card"><h3>Hoja de ruta</h3><p class="muted">Siguientes retos del juego: ' + planned + '.</p></div>', true);
+  document.getElementById('back').onclick = () => (App.user ? viewMenu() : viewLogin());
+  document.getElementById('cls').onclick = viewClass;
+  if (Cloud.on) {
+    bindGroupsCard();
+    ['imp', 'clr', 'file'].forEach(id => { document.getElementById(id).style.display = 'none'; });
+    document.getElementById('rfr').onclick = enterTeacher;
+    document.getElementById('tout').onclick = () => { Cloud.tClear(); App.store = App.studentStore; viewLogin(); };
+  }
+  const $r = id => document.getElementById(id);
+  const fillRoster = () => { $r('rtxt').value = Roster.toText(App.store.roster(normGroup($r('rgrp').value))); };
+  fillRoster();
+  $r('rgrp').onchange = fillRoster;
+  $r('rload').onclick = () => $r('rfile').click();
+  $r('rfile').onchange = e => { const f = e.target.files[0]; if (!f) return; const fr = new FileReader(); fr.onload = () => { $r('rtxt').value = String(fr.result).replace(/^\uFEFF/, ''); }; fr.readAsText(f); };
+  $r('rsave').onclick = () => {
+    const g = normGroup($r('rgrp').value);
+    if (!g) return ($r('rerr').textContent = 'Escribe el grupo.');
+    const R = Roster.parse($r('rtxt').value, g);
+    if (R.errors.length) return ($r('rerr').textContent = R.errors.slice(0, 3).join(' '));
+    if (!R.list.length) return ($r('rerr').textContent = 'Escribe al menos un alumno.');
+    const now = Date.now();
+    App.store.upsertMany(R.list.map(a => { const key = a.group + '-' + a.id; return App.store.student(key) ? {key, name: a.name} : {key, group: a.group, id: a.id, name: a.name, points: 0, bestStreak: 0, created: now}; }));
+    Prefs.set('lastGroup', g); App.teacherGroup = g;
+    viewTeacher(); notice('Lista guardada: ' + R.list.length + ' alumnos en ' + g + '.');
+  };
+  document.getElementById('gsel').onchange = e => { App.teacherGroup = e.target.value; viewTeacher(); };
+  document.getElementById('ej').onclick = () => saveFile('fraclab-' + new Date().toISOString().slice(0, 10) + '.json', JSON.stringify(App.store.exportAll()), 'application/json');
+  document.getElementById('ec').onclick = () => {
+    const nm = {}; App.store.students().forEach(x => { nm[x.key] = x.name || ''; });
+    const q = v => '"' + String(v).replace(/"/g, '""') + '"';
+    const head = ['grupo', 'lista', 'nombre', 'fecha', 'ronda', 'habilidad', 'nivel', 'figura', 'numerador', 'denominador', 'correcta', 'ms', 'tiempo_agotado', 'error', 'numeros_mcm', 'errores', 'pistas', 'entero', 'resultado', 'ejercicio'];
+    const lines = App.store.records().map(r => [r.g, r.st, q(nm[r.sk] || ''), new Date(r.ts).toISOString(), r.rd || '', r.skill, r.lvl, r.shape || '', r.n == null ? '' : r.n, r.d == null ? '' : r.d, r.ok ? 1 : 0, r.ms, r.to ? 1 : 0, r.err || '', r.nums ? r.nums.join('|') : '', r.er || 0, r.hn || 0, r.w || '', r.res || '', q(r.ex || '')].join(','));
+    saveFile('fraclab-' + new Date().toISOString().slice(0, 10) + '.csv', '﻿' + head.join(',') + '\n' + lines.join('\n'), 'text/csv');
+  };
+  document.getElementById('imp').onclick = () => document.getElementById('file').click();
+  document.getElementById('file').onchange = e => {
+    const f = e.target.files[0]; if (!f) return;
+    const rd = new FileReader();
+    rd.onload = () => { try { const n = App.store.importAll(JSON.parse(rd.result)); viewTeacher(); notice('Importados ' + n + ' registros nuevos.'); } catch (err) { notice('No se pudo importar: ' + err.message); } };
+    rd.readAsText(f);
+  };
+  document.getElementById('clr').onclick = () => askConfirm('¿Borrar TODOS los alumnos y resultados de este equipo?', () => askConfirm('Esta acción no se puede deshacer. ¿Continuar?', () => { App.store.clearAll(); viewTeacher(); }, 'Sí, borrar todo'));
+  document.querySelectorAll('tr.st').forEach(tr => tr.onclick = () => showDetail(tr.dataset.k));
+}
+
+function showDetail(key) {
+  const s = App.store.student(key), recs = App.store.records(r => r.sk === key);
+  const den = Analytics.byDenominator(recs), errs = Analytics.errorTypes(recs), al = Analytics.alerts(recs), S = Analytics.summary(recs);
+  const sh = Analytics.byShape(recs), lv = Analytics.byLevel(recs);
+  const dRows = Object.keys(den).sort((a, b) => a - b).map(d => '<tr><td>' + d + '</td><td>' + den[d].a + '</td><td>' + pct(den[d].c / den[d].a) + '</td></tr>').join('');
+  const eRows = Object.keys(errs).sort((a, b) => errs[b] - errs[a]).map(k => '<li>' + esc(Config.ERR_LABELS[k] || k) + ' (' + errs[k] + ')</li>').join('');
+  const sr = recs.filter(r => r.skill === 'simplify');
+  const simpBlock = sr.length ? '<div style="margin-top:12px"><b>Reto Simplifica</b><p class="muted small">Fracciones: ' + sr.length + ' · errores por fracción: ' + (sr.reduce((t, r) => t + (r.er || 0), 0) / sr.length).toFixed(1) +
+    ' · pistas: ' + sr.reduce((t, r) => t + (r.hn || 0), 0) + '</p><div>' +
+    sr.slice(-12).map(r => '<span class="badge ' + (r.ok ? 'ok' : r.to ? 'med' : 'high') + '">' + (r.w ? r.w + ' ' : '') + r.n + '/' + r.d + ' → ' + r.res + (r.er ? ' (' + r.er + ' err.)' : '') + '</span>').join('') + '</div></div>' : '';
+  const ar = recs.filter(r => r.skill === 'addsub_unlike');
+  const addBlock = ar.length ? '<div style="margin-top:12px"><b>Reto Suma</b><p class="muted small">Ejercicios: ' + ar.length + ' · errores por ejercicio: ' + (ar.reduce((t, r) => t + (r.er || 0), 0) / ar.length).toFixed(1) +
+    ' · pistas: ' + ar.reduce((t, r) => t + (r.hn || 0), 0) + '</p><div>' +
+    ar.slice(-8).map(r => '<span class="badge ' + (r.ok ? 'ok' : r.to ? 'med' : 'high') + '">' + esc(r.ex) + ' = ' + r.res + (r.er ? ' (' + r.er + ' err.)' : '') + '</span>').join('') + '</div></div>' : '';
+  const mr = recs.filter(r => r.skill === 'mcm');
+  const mcmBlock = mr.length ? '<div style="margin-top:12px"><b>Reto MCM</b><p class="muted small">Colecciones: ' + mr.length + ' · errores por colección: ' + (mr.reduce((t, r) => t + (r.er || 0), 0) / mr.length).toFixed(1) +
+    ' · pistas: ' + mr.reduce((t, r) => t + (r.hn || 0), 0) + '</p><div>' +
+    mr.slice(-12).map(r => '<span class="badge ' + (r.ok ? 'ok' : r.to ? 'med' : 'high') + '">' + r.nums.join(', ') + ' → ' + r.mcm + (r.er ? ' (' + r.er + ' err.)' : '') + '</span>').join('') + '</div></div>' : '';
+  document.getElementById('detail').innerHTML = '<div class="card"><h3>' + (s.name ? esc(s.name) + ' · ' : '') + 'Lista ' + s.id + ' · ' + esc(s.group) + '</h3>' +
+    '<p class="muted">Rondas: ' + S.rounds + ' · Aciertos: ' + (S.a ? pct(S.acc) : '—') + ' · Tiempo promedio: ' + (S.a ? secs(S.avgMs) : '—') + ' · Tiempos agotados: ' + S.timeouts + '</p>' +
+    (al.length ? '<p>' + al.map(a => '<span class="badge ' + a.level + '">' + esc(a.text) + '</span>').join('') + '</p>' : '') +
+    '<div class="grid2"><div><b>Aciertos por denominador</b><table><thead><tr><th>Denominador</th><th>Intentos</th><th>Aciertos</th></tr></thead><tbody>' + (dRows || '<tr><td colspan="3" class="muted">Sin datos</td></tr>') + '</tbody></table></div>' +
+    '<div><b>Errores frecuentes</b><ul>' + (eRows || '<li class="muted">Sin errores registrados</li>') + '</ul></div></div>' +
+    '<div class="grid2" style="margin-top:12px"><div><b>Por figura</b>' + Object.keys(sh).map(k => meter(shapeName(k), sh[k])).join('') + '</div>' +
+    '<div><b>Por nivel</b>' + Object.keys(lv).sort().map(k => meter('Nivel ' + k, lv[k])).join('') + '</div></div>' + mcmBlock + simpBlock + addBlock +
+    '<div class="row left" style="margin-top:12px">' + (Cloud.on ? '<span class="muted small" style="align-self:center">NIP: ' + (s.hasPin ? 'creado' : 'sin crear') + (s.lockedUntil > Date.now() ? ' · 🔒 bloqueado' : '') + '</span>' + (s.dbId && s.hasPin ? '<button class="btn" id="rstpin">🔑 Reiniciar NIP</button>' : '') : '') + '<button class="btn" id="rmst" style="color:var(--bad)">Quitar alumno y sus resultados</button></div></div>';
+  document.getElementById('rmst').onclick = () => askConfirm('¿Quitar a ' + (s.name || 'lista ' + s.id) + ' y borrar sus ' + recs.length + ' resultados?', async () => {
+    if (Cloud.on && s.dbId) { const r = await Cloud.tReq('DELETE', '/rest/v1/students?id=eq.' + s.dbId).catch(e => ({ok: false})); if (!r.ok) return notice('No se pudo borrar en la nube.'); }
+    App.store.removeStudent(key); viewTeacher();
+  }, 'Sí, quitar');
+  const rp = document.getElementById('rstpin');
+  if (rp) rp.onclick = () => askConfirm('¿Reiniciar el NIP de ' + (s.name || 'lista ' + s.id) + '? Al entrar tendrá que crear uno nuevo.', async () => {
+    const r = await Cloud.tReq('POST', '/rest/v1/rpc/teacher_reset_pin', {p_student: s.dbId}).catch(e => ({ok: false}));
+    if (!r.ok) return notice('No se pudo reiniciar el NIP.');
+    await enterTeacher(); notice('NIP reiniciado. La próxima vez que entre, creará uno nuevo.');
+  }, 'Sí, reiniciar');
+  document.getElementById('detail').scrollIntoView({behavior: 'smooth'});
+}
+
+/* ---------- Arranque ---------- */
+function boot() {
+  Cloud.init();
+  App.store = App.studentStore = Cloud.on ? new ApiStore() : new LocalStore();
+  Sound.on = Prefs.get('sound', true);
+  Music.on = Prefs.get('music', true);
+  document.addEventListener('visibilitychange', () => { try { if (Sound.ctx) document.hidden ? Sound.ctx.suspend() : Sound.ctx.resume(); } catch (e) { /* sin audio */ } });
+  App.timerOn = Prefs.get('timer', true);
+  document.addEventListener('keydown', e => { if (App.keys && !document.querySelector('.modal') && !/INPUT|SELECT|TEXTAREA/.test((e.target || {}).tagName || '')) App.keys(e); });
+  viewLogin();
+}
+if (typeof document !== 'undefined') boot();
+</script>
+</body>
+</html>
