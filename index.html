@@ -189,6 +189,9 @@ tr.st{cursor:pointer}tr.st:hover{background:#f7f5ff}
      y estadísticas (del alumno y para el docente).
 
    HISTORIAL DE VERSIONES
+     1.1.0  Zona docente: «Reporte para gestión escolar». Descarga un archivo (sin nombres) con, por
+            número de lista y por mes, días practicados, intentos, aciertos por reto y tiempos
+            agotados, para cargarlo en el sistema de gestión del grupo (Alerta temprana).
      1.0.0  FracLab en la nube (Supabase + GitHub Pages). Acceso del alumno con código de grupo +
             número de lista + NIP de 4 dígitos (sin nombres ni CURP). Cada intento se guarda en
             la nube; sin internet queda en cola y se envía al volver la conexión. Zona docente con
@@ -219,7 +222,7 @@ tr.st{cursor:pointer}tr.st:hover{background:#f7f5ff}
 
 /* ============================ MODULE: Config ======================== */
 const Config = {
-  VERSION: '1.0.0',
+  VERSION: '1.1.0',
   ROUND_SIZE: 8,
   TEACHER_PIN: '',            // solo modo local (sin nube): '' = sin PIN. Ejemplo: '2468'
   // ☁️ Nube (Supabase). La llave es PÚBLICA (anon/publishable); nunca pongas aquí la llave secret/service_role.
@@ -2531,6 +2534,11 @@ function viewTeacher() {
     (rows || '<tr><td colspan="14" class="muted">Aún no hay alumnos registrados.</td></tr>') + '</tbody></table></div>' +
     '<p class="muted small">Toca un alumno para ver el detalle por denominador, figura, nivel y tipos de error frecuentes. ' + (Cloud.on ? 'Los resultados de todos los dispositivos se reúnen solos en la nube; usa «Actualizar» para traer lo más reciente.' : 'Para reunir datos de varias computadoras: exporta JSON en cada una e impórtalos aquí.') + '</p></div>' +
     '<div id="detail"></div>' +
+    '<div class="card"><h3>📤 Reporte para gestión escolar</h3>' +
+    '<p class="muted small" style="max-width:none">Descarga un archivo con el resumen del mes por número de lista (<b>sin nombres</b>) para cargarlo en tu sistema de gestión, en <i>Alerta temprana</i>.</p>' +
+    '<div class="row left" style="margin:0 0 8px"><label for="mgrp" style="margin:0">Grupo</label><select id="mgrp" style="width:auto">' + groups.map(g => '<option' + (g === rg ? ' selected' : '') + '>' + esc(g) + '</option>').join('') + '</select> ' +
+    '<label for="mmes" style="margin:0">Mes</label><input type="month" id="mmes" style="width:auto" value="' + monthOf(Date.now()) + '"> ' +
+    '<button class="btn primary" id="mrep">Descargar reporte</button></div><div class="err" id="merr"></div></div>' +
     '<div class="card"><h3>Hoja de ruta</h3><p class="muted">Siguientes retos del juego: ' + planned + '.</p></div>', true);
   document.getElementById('back').onclick = () => (App.user ? viewMenu() : viewLogin());
   document.getElementById('cls').onclick = viewClass;
@@ -2566,6 +2574,14 @@ function viewTeacher() {
     const lines = App.store.records().map(r => [r.g, r.st, q(nm[r.sk] || ''), new Date(r.ts).toISOString(), r.rd || '', r.skill, r.lvl, r.shape || '', r.n == null ? '' : r.n, r.d == null ? '' : r.d, r.ok ? 1 : 0, r.ms, r.to ? 1 : 0, r.err || '', r.nums ? r.nums.join('|') : '', r.er || 0, r.hn || 0, r.w || '', r.res || '', q(r.ex || '')].join(','));
     saveFile('fraclab-' + new Date().toISOString().slice(0, 10) + '.csv', '﻿' + head.join(',') + '\n' + lines.join('\n'), 'text/csv');
   };
+  document.getElementById('mrep').onclick = () => {
+    const g = document.getElementById('mgrp').value, m = document.getElementById('mmes').value;
+    if (!g || !/^\d{4}-\d{2}$/.test(m)) return (document.getElementById('merr').textContent = 'Elige el grupo y el mes.');
+    document.getElementById('merr').textContent = '';
+    const rep = mgmtReport(g, m);
+    saveFile('fraclab-gestion-' + g + '-' + m + '.json', JSON.stringify(rep, null, 1), 'application/json');
+    notice('Reporte de ' + g + ' · ' + m + ': ' + rep.alumnos.length + ' alumnos, ' + rep.alumnos.filter(a => a.intentos > 0).length + ' con práctica.');
+  };
   document.getElementById('imp').onclick = () => document.getElementById('file').click();
   document.getElementById('file').onchange = e => {
     const f = e.target.files[0]; if (!f) return;
@@ -2575,6 +2591,36 @@ function viewTeacher() {
   };
   document.getElementById('clr').onclick = () => askConfirm('¿Borrar TODOS los alumnos y resultados de este equipo?', () => askConfirm('Esta acción no se puede deshacer. ¿Continuar?', () => { App.store.clearAll(); viewTeacher(); }, 'Sí, borrar todo'));
   document.querySelectorAll('tr.st').forEach(tr => tr.onclick = () => showDetail(tr.dataset.k));
+}
+
+/* Mes local (AAAA-MM) y día local (AAAA-MM-DD) de una marca de tiempo */
+function monthOf(ts) { const d = new Date(ts), p = n => String(n).padStart(2, '0'); return d.getFullYear() + '-' + p(d.getMonth() + 1); }
+function dayOf(ts) { const d = new Date(ts), p = n => String(n).padStart(2, '0'); return monthOf(ts) + '-' + p(d.getDate()); }
+
+/* Reporte mensual por número de lista para el sistema de gestión (sin nombres) */
+function mgmtReport(group, month) {
+  const sts = App.store.students().filter(s => s.group === group).sort((a, b) => a.id - b.id);
+  const recs = App.store.records(r => r.g === group && monthOf(r.ts) === month);
+  const by = {};
+  recs.forEach(r => { (by[r.st] = by[r.st] || []).push(r); });
+  const nums = [...new Set(sts.map(s => s.id).concat(Object.keys(by).map(Number)))].sort((a, b) => a - b);
+  const alumnos = nums.map(n => {
+    const rs = by[n] || [], mods = {}, days = new Set();
+    rs.forEach(r => {
+      days.add(dayOf(r.ts));
+      const m = mods[r.skill] = mods[r.skill] || {intentos: 0, aciertos: 0};
+      m.intentos++; if (r.ok) m.aciertos++;
+    });
+    const ok = rs.filter(r => r.ok).length, last = rs.reduce((mx, r) => Math.max(mx, r.ts), 0);
+    return {
+      lista: n, intentos: rs.length, aciertos: ok,
+      pct: rs.length ? Math.round(ok / rs.length * 100) : null,
+      dias: days.size, ultima: last ? dayOf(last) : null,
+      tiempo_agotado: rs.filter(r => r.to).length,
+      modulos: mods
+    };
+  });
+  return {formato: 'fraclab-gestion', version: 1, app: Config.VERSION, grupo: group, mes: month, generado: new Date().toISOString(), alumnos};
 }
 
 function showDetail(key) {
