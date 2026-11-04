@@ -189,6 +189,7 @@ tr.st{cursor:pointer}tr.st:hover{background:#f7f5ff}
      y estadísticas (del alumno y para el docente).
 
    HISTORIAL DE VERSIONES
+     1.2.1  Corrige Mixtas: ahora usa exactamente el método de Suma (ver 1.2.0).
      1.2.0  Reto nuevo «Operaciones con mixtas»: mismo método y pantalla que Suma (simplificar, mcm, plantilla,
             operar, simplificar; el resultado se deja como fracción impropia) pero combinando sumas y restas
             (a + b − c). 3 niveles como Suma: 2 propias · 2 mixtas · 3 variadas. 5 ejercicios por ronda.
@@ -227,7 +228,7 @@ tr.st{cursor:pointer}tr.st:hover{background:#f7f5ff}
 
 /* ============================ MODULE: Config ======================== */
 const Config = {
-  VERSION: '1.2.0',
+  VERSION: '1.2.1',
   ROUND_SIZE: 8,
   TEACHER_PIN: '',            // solo modo local (sin nube): '' = sin PIN. Ejemplo: '2468'
   // ☁️ Nube (Supabase). La llave es PÚBLICA (anon/publishable); nunca pongas aquí la llave secret/service_role.
