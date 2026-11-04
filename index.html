@@ -189,6 +189,11 @@ tr.st{cursor:pointer}tr.st:hover{background:#f7f5ff}
      y estadísticas (del alumno y para el docente).
 
    HISTORIAL DE VERSIONES
+     1.2.0  Reto nuevo «Operaciones con mixtas» (suma y resta), paso a paso, en 3 niveles de 5 ejercicios:
+            N1 sumas con igual denominador (sin y con entero) · N2 sumas y restas con igual denominador
+            (sin y con entero) · N3 sumas y restas con distinto denominador (sin y con entero).
+            Modo docente: casillas entero / numerador / denominador y botón + / − para el pizarrón.
+            Requiere ejecutar fraclab-migracion-1.2.sql en Supabase ANTES de publicar esta versión.
      1.1.0  Zona docente: «Reporte para gestión escolar». Descarga un archivo (sin nombres) con, por
             número de lista y por mes, días practicados, intentos, aciertos por reto y tiempos
             agotados, para cargarlo en el sistema de gestión del grupo (Alerta temprana).
@@ -222,7 +227,7 @@ tr.st{cursor:pointer}tr.st:hover{background:#f7f5ff}
 
 /* ============================ MODULE: Config ======================== */
 const Config = {
-  VERSION: '1.1.0',
+  VERSION: '1.2.0',
   ROUND_SIZE: 8,
   TEACHER_PIN: '',            // solo modo local (sin nube): '' = sin PIN. Ejemplo: '2468'
   // ☁️ Nube (Supabase). La llave es PÚBLICA (anon/publishable); nunca pongas aquí la llave secret/service_role.
@@ -233,11 +238,10 @@ const Config = {
     color:         {name: 'Colorea la fracción',    icon: '🎨', active: true,  desc: 'Colorea las partes que indica el numerador.'},
     mcm:           {name: 'Mínimo común múltiplo', icon: '🧮', active: true, desc: 'Descubre el denominador común con la tabla de primos.'},
     line:          {name: 'Recta numérica',         icon: '📏', active: false, desc: 'Ubica fracciones en la recta.'},
-    mixed:         {name: 'Fracciones con entero',  icon: '🧩', active: false, desc: 'Números mixtos e impropias.'},
     primes:        {name: 'Primos y factores',      icon: '🔢', active: false, desc: 'Números primos y descomposición.'},
     simplify:      {name: 'Simplifica',             icon: '✂️', active: true,  desc: 'Simplifica con números primos: simples y mixtas.'},
-    addsub_like:   {name: 'Suma y resta (igual denominador)', icon: '➕', active: false, desc: 'Operaciones básicas.'},
-    addsub_unlike: {name: 'Suma (distinto denominador)', icon: '🏁', active: true, desc: 'Simplifica, saca el mcm, usa la plantilla y suma.'}
+    addsub_unlike: {name: 'Suma (distinto denominador)', icon: '🏁', active: true, desc: 'Simplifica, saca el mcm, usa la plantilla y suma.'},
+    mixops:        {name: 'Operaciones con mixtas', icon: '🧩', active: true, desc: 'Suma y resta con y sin enteros, paso a paso.'}
   },
   SHAPES: {
     circle: {name: 'Círculo',            icon: '⚪'},
@@ -254,7 +258,7 @@ const Config = {
     3: {name: 'Nivel 3', denoms: [3, 4, 5, 6, 7, 8, 9, 10, 12], shapes: ['rect', 'circle', 'square', 'choco', 'pizza', 'pastel'], contiguous: false}
   },
   // Segundos por pregunta según habilidad y nivel
-  TIME: {identify: {1: 20, 2: 15, 3: 12}, color: {1: 30, 2: 22, 3: 16}, mcm: {1: 90, 2: 105, 3: 130}, simplify: {1: 60, 2: 90, 3: 100}, addsub_unlike: {1: 180, 2: 240, 3: 360}},   // MCM: + 15 s por cada número después del segundo
+  TIME: {identify: {1: 20, 2: 15, 3: 12}, color: {1: 30, 2: 22, 3: 16}, mcm: {1: 90, 2: 105, 3: 130}, simplify: {1: 60, 2: 90, 3: 100}, addsub_unlike: {1: 180, 2: 240, 3: 360}, mixops: {1: 150, 2: 180, 3: 300}},   // MCM: + 15 s por cada número después del segundo
   // Reto MCM: 5 intentos (colecciones) por ronda. ks = cuántos números hay en cada colección (se alternan);
   // lcms = mínimos comunes múltiplos posibles; min/max = rango de los números de la colección.
   MCM: {ROUND: 5, PRIMES: [2, 3, 5, 7, 11, 13],
@@ -281,6 +285,13 @@ const Config = {
           2: {desc: '2 fracciones mixtas',   k: 2, bMax: 9, maxL: 36, maxD: 18, maxW: 4, pRed: 0.3, kinds: ['mixed']},
           3: {desc: '3 fracciones variadas', k: 3, bMax: 9, maxL: 60, maxD: 18, maxW: 4, pRed: 0.3, kinds: ['mixed', 'proper', 'improper']}
         }},
+  // Operaciones con mixtas: 5 ejercicios por nivel; los primeros NOWHOLE van sin entero y el resto con entero.
+  MIX: {ROUND: 5, NOWHOLE: 2,
+        LEVELS: {
+          1: {desc: 'sumas con igual denominador (sin y con entero)',               ops: ['+'],      same: true,  dMin: 3, dMax: 10, maxW: 5},
+          2: {desc: 'sumas y restas con igual denominador (sin y con entero)',       ops: ['+', '-'], same: true,  dMin: 3, dMax: 12, maxW: 6},
+          3: {desc: 'sumas y restas con distinto denominador (sin y con entero)',    ops: ['+', '-'], same: false, bMax: 9, maxL: 36, maxD: 18, maxW: 4, pRed: 0.3}
+        }},
   CLASS: {maxDen: 24, maxWhole: 5, maxFigs: 6},
   ALERTS: {minAttempts: 6, lowAcc: 0.6, critAcc: 0.5, window: 20, denomErrors: 3,
            fastMs: 1500, fastCount: 5, fastAcc: 0.5, inactiveDays: 7, timeouts: 3},
@@ -302,6 +313,10 @@ const Config = {
     factor: 'Se equivoca al dividir el mcm entre el denominador',
     mult2: 'Se equivoca al multiplicar por el numerador (plantilla)',
     sum: 'Se equivoca al sumar los numeradores',
+    sub: 'Se equivoca al restar los numeradores',
+    opsign: 'Confunde la suma con la resta (el signo)',
+    mixw: 'Se equivoca con el entero al escribir el resultado como mixto',
+    mixr: 'Se equivoca con el numerador al escribir el resultado como mixto',
     other: 'Otro tipo de error'
   }
 };
@@ -462,6 +477,59 @@ const Content = {
   makeAddRound(level, size) {
     const seen = new Set(), qs = [];
     for (let i = 0; i < size; i++) { const q = Content.makeAdd(level, seen); seen.add(q.key); qs.push(q); }
+    return qs;
+  },
+  // ---- Reto Operaciones con mixtas (suma y resta) ----
+  mixGT(a, b) { return (a.w * a.d + a.n) * b.d > (b.w * b.d + b.n) * a.d; },
+  solveMix(fr, op, same) {
+    const sg = op === '-' ? -1 : 1; let S;
+    if (same) {
+      const d = fr[0].d, N = fr.map(f => f.w * d + f.n);
+      S = {same: true, N, dens: [d, d], mcm: d, T: N[0] + sg * N[1]};
+    } else {
+      const red = fr.map(f => MathUtil.simpSteps(f.w * f.d + f.n, f.d).res), dens = red.map(r => r.d), mcm = MathUtil.lcmAll(dens);
+      const facs = dens.map(d => mcm / d), prods = red.map((r, i) => r.n * facs[i]);
+      S = {same: false, red, dens, mcm, facs, prods, T: prods[0] + sg * prods[1]};
+    }
+    S.res = MathUtil.simpSteps(S.T, S.mcm).res;
+    S.mixed = S.res.n > S.res.d ? MathUtil.toMixed(S.res.n, S.res.d) : null;
+    S.ok = S.T > 0 && S.res.d > 1;   // sin resultados negativos, cero ni enteros
+    return S;
+  },
+  makeMix(level, op, whole, seen) {
+    const L = Config.MIX.LEVELS[level], r = (a, b) => a + rand(b - a + 1), g = MathUtil.gcd;
+    for (let t = 0; t < 3000; t++) {
+      let fr;
+      if (L.same) {
+        const d = r(L.dMin, L.dMax);
+        fr = [0, 1].map(() => ({w: 0, n: r(1, d - 1), d}));
+      } else {
+        const bs = [r(2, L.bMax), r(2, L.bMax)];
+        if (bs[0] === bs[1]) continue;
+        const lcm = MathUtil.lcmAll(bs); if (lcm > L.maxL) continue;
+        if (lcm === Math.max(bs[0], bs[1]) && Math.random() > 0.2) continue;
+        let bad = false; fr = [];
+        bs.forEach(b => {
+          const a = r(1, b - 1); if (g(a, b) !== 1) { bad = true; return; }
+          const m = Math.random() < L.pRed ? pick([2, 3]) : 1, mm = b * m <= L.maxD ? m : 1;
+          fr.push({w: 0, n: a * mm, d: b * mm});
+        });
+        if (bad) continue;
+      }
+      if (whole) fr.forEach((f, i) => { if (i === 0 || Math.random() < 0.8) f.w = r(1, L.maxW); });
+      if (op === '-' && !Content.mixGT(fr[0], fr[1])) { if (!Content.mixGT(fr[1], fr[0])) continue; fr.reverse(); }
+      const sol = Content.solveMix(fr, op, L.same); if (!sol.ok) continue;
+      const key = fr.map(f => (f.w ? f.w + ' ' : '') + f.n + '/' + f.d).join(op === '-' ? ' \u2212 ' : ' + ');
+      if (seen && seen.has(key)) continue;
+      return {skill: 'mixops', level, op, whole, fr, key, sol, mcm: sol.mcm};
+    }
+    const fr = L.same ? [{w: whole ? 2 : 0, n: 3, d: 5}, {w: whole ? 1 : 0, n: 4, d: 5}] : [{w: whole ? 2 : 0, n: 1, d: 2}, {w: whole ? 1 : 0, n: 1, d: 3}], sol = Content.solveMix(fr, '+', L.same);
+    return {skill: 'mixops', level, op: '+', whole, fr, key: 'fb' + rand(1e6), sol, mcm: sol.mcm};
+  },
+  makeMixRound(level, size) {
+    const L = Config.MIX.LEVELS[level], seen = new Set(), qs = [];
+    const ops = L.ops.length === 1 ? Array(size).fill(L.ops[0]) : shuffle(Array.from({length: size}, (_, i) => L.ops[i % L.ops.length]));
+    for (let i = 0; i < size; i++) { const q = Content.makeMix(level, ops[i], i >= Config.MIX.NOWHOLE, seen); seen.add(q.key); qs.push(q); }
     return qs;
   },
   fillSet(q, contiguous) {
@@ -1103,11 +1171,12 @@ function exitGame() { App.inGame = false; if (App.demo) viewDemo(); else viewMen
 function demoCfg() {
   const el = document.getElementById('app'), G = App.game, sk = G.skill;
   let box = document.getElementById('democfg'); if (box) box.remove();
-  if (!['mcm', 'simplify', 'addsub_unlike'].includes(sk)) return;
+  if (!['mcm', 'simplify', 'addsub_unlike', 'mixops'].includes(sk)) return;
   App.cfg = App.cfg || {};
-  const C = App.cfg[sk] = App.cfg[sk] || (sk === 'mcm' ? ['', '', '', '', ''] : sk === 'simplify' ? [{w: '', n: '', d: ''}] : [{w: '', n: '', d: ''}, {w: '', n: '', d: ''}, {w: '', n: '', d: ''}]);
+  const C = App.cfg[sk] = App.cfg[sk] || (sk === 'mcm' ? ['', '', '', '', ''] : sk === 'simplify' ? [{w: '', n: '', d: ''}] : sk === 'mixops' ? [{w: '', n: '', d: ''}, {w: '', n: '', d: ''}] : [{w: '', n: '', d: ''}, {w: '', n: '', d: ''}, {w: '', n: '', d: ''}]);
+  App.cfgOp = App.cfgOp === '-' ? '-' : '+';
   const inp = (k, i, ph, w) => '<input class="cfg" type="number" min="0" inputmode="numeric" data-k="' + k + '" data-i="' + i + '" placeholder="' + ph + '" style="width:' + w + 'px">';
-  const fracBox = (f, i) => (i ? '<span class="cplus">' + (sk === 'addsub_unlike' ? '+' : '') + '</span>' : '') +
+  const fracBox = (f, i) => (i ? '<span class="cplus">' + (sk === 'addsub_unlike' ? '+' : sk === 'mixops' ? '<button class="btn" id="cop" title="Cambiar entre suma y resta" style="font-size:26px;padding:0 14px">' + (App.cfgOp === '-' ? '\u2212' : '+') + '</button>' : '') + '</span>' : '') +
     '<span class="cfr">' + inp('w', i, 'ent.', 58) + '<span class="cst">' + inp('n', i, 'num.', 62) + '<i></i>' + inp('d', i, 'den.', 62) + '</span></span>';
   const body = sk === 'mcm' ? C.map((v, i) => inp('m', i, 'n' + (i + 1), 62)).join('')
              : C.map(fracBox).join('') + (sk === 'addsub_unlike' && C.length < 4 ? '<button class="btn" id="cadd" title="Agregar fracción">＋</button>' : '');
@@ -1120,6 +1189,7 @@ function demoCfg() {
     i.onkeydown = e => { e.stopPropagation(); if (e.key === 'Enter') { e.preventDefault(); go(); } };
   });
   const rebuild = () => demoCfg();
+  const cop = box.querySelector('#cop'); if (cop) cop.onclick = () => { App.cfgOp = App.cfgOp === '-' ? '+' : '-'; rebuild(); };
   const add = box.querySelector('#cadd'); if (add) add.onclick = () => { C.push({w: '', n: '', d: ''}); rebuild(); };
   box.querySelector('#cclr').onclick = () => { App.cfg[sk] = null; rebuild(); };
   const go = () => {
@@ -1137,6 +1207,13 @@ function demoCfg() {
         if (frs.length !== 1) return err('Escribe una fracción.');
         const f = frs[0];
         q = Content.finishSimp({skill: 'simplify', level: lv, kind: f.w ? 'mixed' : f.n >= f.d ? 'improper' : 'simple', w: f.w, n: f.n, d: f.d, key: 'c' + Date.now()});
+      } else if (sk === 'mixops') {
+        if (frs.length !== 2) return err('Escribe exactamente 2 fracciones.');
+        const op = App.cfgOp === '-' ? '-' : '+';
+        if (op === '-' && !Content.mixGT(frs[0], frs[1])) return err('En la resta, la primera fracción debe ser mayor que la segunda.');
+        const same = frs[0].d === frs[1].d, sol = Content.solveMix(frs, op, same);
+        if (!sol.ok) return err('Ese resultado da un número entero; elige otras fracciones.');
+        q = {skill: 'mixops', level: lv, op, whole: frs.some(f => f.w > 0), fr: frs, key: 'c' + Date.now(), sol, mcm: sol.mcm};
       } else {
         if (frs.length < 2) return err('Escribe al menos 2 fracciones.');
         const sol = Content.solveAdd(frs);
@@ -1446,7 +1523,8 @@ function viewMenu() {
     '</div><p class="muted small" id="lvinfo">' + Config.LEVELS[App.level].shapes.map(s => Config.SHAPES[s].icon + ' ' + Config.SHAPES[s].name).join(' · ') +
     ' · fracciones con denominador hasta ' + Math.max.apply(null, Config.LEVELS[App.level].denoms) + '<br>🧮 MCM: ' + Config.MCM.ROUND + ' intentos de ' + Config.MCM.LEVELS[App.level].desc + ' (del ' + Config.MCM.LEVELS[App.level].min + ' al ' + Config.MCM.LEVELS[App.level].max + ') · acierto = máximo 1 error y 1 pista' +
     '<br>✂️ Simplifica: ' + Config.SIMP.ROUND + ' intentos de ' + Config.SIMP.LEVELS[App.level].desc +
-    '<br>🏁 Suma: ' + Config.ADD.ROUND + ' ejercicios de ' + Config.ADD.LEVELS[App.level].desc + '</p>' +
+    '<br>🏁 Suma: ' + Config.ADD.ROUND + ' ejercicios de ' + Config.ADD.LEVELS[App.level].desc +
+    '<br>🧩 Mixtas: ' + Config.MIX.ROUND + ' ejercicios de ' + Config.MIX.LEVELS[App.level].desc + '</p>' +
     '<h3>Elige el reto</h3><div class="modes">' + modes + '</div></div>' +
     '<div class="row"><label class="chk"><input type="checkbox" id="tmr" ' + (App.timerOn ? 'checked' : '') + '> ⏱ Con temporizador (' + tl.identify[App.level] + ' s por pregunta al identificar, ' + tl.color[App.level] + ' s al colorear, ' + tl.mcm[App.level] + ' s por colección en MCM, ' + tl.simplify[App.level] + ' s por fracción al simplificar, ' + tl.addsub_unlike[App.level] + ' s por suma)</label>' +
     '<label class="chk"><input type="checkbox" id="snd" ' + (Sound.on ? 'checked' : '') + '> 🔊 Sonidos</label>' +
@@ -1491,6 +1569,7 @@ function viewStats() {
 function startRound(skill, level, custom) {
   const qs = custom ? custom : skill === 'mcm' ? Content.makeMcmRound(level, Config.MCM.ROUND)
            : skill === 'addsub_unlike' ? Content.makeAddRound(level, Config.ADD.ROUND)
+           : skill === 'mixops' ? Content.makeMixRound(level, Config.MIX.ROUND)
            : skill === 'simplify' ? Content.makeSimpRound(level, Config.SIMP.ROUND)
            : Content.makeRound(skill, level, Config.ROUND_SIZE);
   Music.play(); App.inGame = true;
@@ -1503,6 +1582,7 @@ function viewQuestion() {
   if (q.skill === 'mcm') return viewMcm();
   if (q.skill === 'simplify') return viewSimp();
   if (q.skill === 'addsub_unlike') return viewAdd();
+  if (q.skill === 'mixops') return viewMix();
   G.locked = false; G.t0 = performance.now();
   G.layout = Shape.layout(q.shape, q.d, 1, 640, 320);
   G.filled = q.skill === 'identify' ? q.filled : new Set(); G.cursor = 0;
@@ -1571,6 +1651,7 @@ function timeUp() {
   if (q.skill === 'mcm') return finalizeMcm(false, true);
   if (q.skill === 'simplify') return finalizeSimp(false, true);
   if (q.skill === 'addsub_unlike') return finalizeAdd(true);
+  if (q.skill === 'mixops') return finalizeMix(true);
   if (q.skill === 'identify') document.querySelectorAll('.opt').forEach((b, k) => { b.disabled = true; if (q.options[k].ok) b.classList.add('right'); });
   finalize(false, 'timeout', '—', true);
 }
@@ -1629,7 +1710,7 @@ function viewSummary() {
   App.inGame = false;
   const G = App.game, acc = G.correct / G.qs.length, stars = acc >= 0.85 ? 3 : acc >= 0.6 ? 2 : acc >= 0.35 ? 1 : 0;
   Sound.win(); App.keys = null;
-  const up = acc >= (G.skill === 'mcm' || G.skill === 'simplify' || G.skill === 'addsub_unlike' ? 0.8 : 0.85) && G.level < 3 && !G.custom;
+  const up = acc >= (G.skill === 'mcm' || G.skill === 'simplify' || G.skill === 'addsub_unlike' || G.skill === 'mixops' ? 0.8 : 0.85) && G.level < 3 && !G.custom;
   mount('<div class="card center" style="max-width:560px"><h2>¡Ronda terminada!</h2>' +
     '<div class="stars">' + '★'.repeat(stars) + '<span style="color:#d3d9ea">' + '★'.repeat(3 - stars) + '</span></div>' +
     '<p style="font-size:22px"><b>' + G.correct + ' de ' + G.qs.length + '</b> correctas (' + pct(acc) + ')</p>' +
@@ -2379,6 +2460,264 @@ function finalizeAdd(timedOut) {
   App.keys = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); next(); } };
 }
 
+/* ---------- Reto Operaciones con mixtas (suma y resta) ---------- */
+const mixOp = q => (q.op === '-' ? '−' : '+');
+const mixExpr = (q, fr, cls, eq) => fr.map((f, i) => (i ? '<span class="eq">' + mixOp(q) + '</span>' : '') + (f.w > 0 ? fracMixed(f.w, f.n, f.d, cls || 'lg') : frac(f.n, f.d, cls || 'lg'))).join('') + (eq === false ? '' : '<span class="eq">=</span>');
+const mixLong = (nums, L, op, lab) => '<span class="lfrac"><span class="ln">' + nums.join('<span class="eq" style="font-size:30px;margin:0">' + op + '</span>') + '</span><span class="ld"><small>' + lab + '</small><span class="nbox">' + L + '</span></span></span>';
+const mixTarget = X => (X.phase === 'res' ? X.res : X.fr[X.fi]);
+
+function viewMix() {
+  const G = App.game, q = G.qs[G.i], same = q.sol.same;
+  G.locked = false; G.t0 = performance.now(); G.limit = Config.TIME.mixops[G.level] + (q.whole ? 30 : 0); Music.setTension(G.timer ? 0 : 0.25);
+  const firstW = q.fr.findIndex(f => f.w > 0);
+  G.x = {same, phase: same ? (firstW >= 0 ? 'conv' : 'op') : 'simp', fi: same ? Math.max(0, firstW) : 0, er: 0, hn: 0, errs: {}, hintP: null, m: null, mcm: q.sol.mcm, res: null,
+         fr: q.fr.map(f => ({w: f.w, n: f.n, d: f.d, phase: f.w > 0 ? 'conv' : (same ? 'done' : 'simp'), chain: f.w > 0 || same ? [] : [{n: f.n, d: f.d, p: 0}]}))};
+  const head = '<div class="topbar"><span class="pill">' + Config.SKILLS.mixops.icon + ' ' + Config.LEVELS[G.level].name + ' · Ejercicio ' + (G.i + 1) + ' de ' + G.qs.length + '</span>' +
+    '<span><span class="pill" id="pts">⭐ ' + G.points + '</span> <span class="pill" id="stk">🔥 ' + G.streak + '</span> <button class="btn" id="quit">Salir</button></span></div>' +
+    '<div class="bar"><i style="width:' + (G.i / G.qs.length * 100) + '%"></i></div>' +
+    (G.timer ? '<div class="tbar"><i id="tb"></i><span id="tt"></span></div>' : '');
+  mount(head + '<div class="card"><div class="prompt">' + (q.op === '-' ? 'Resta' : 'Suma') + ' las fracciones</div><div class="chain" id="aexp" style="min-height:0"></div><div class="stps" id="asteps"></div>' +
+    '<div id="asec"></div><div class="mmsg" id="mmsg"></div><div class="fb hidden" id="fb"></div></div>', false, true);
+  document.getElementById('quit').onclick = () => askConfirm('¿Salir de la ronda?', exitGame, 'Sí, salir');
+  document.getElementById('aexp').innerHTML = mixExpr(q, q.fr, 'lg', false);
+  App.keys = e => {
+    const X = G.x; if (G.locked) return; const n = parseInt(e.key, 10);
+    if (X.phase === 'res' || (X.phase === 'simp' && X.fr[X.fi].phase === 'simp')) { if ([2, 3, 5, 7].includes(n)) xPrime(n); else if (e.key === '0') xStop(); }
+    else if (X.phase === 'mcm' && X.m.phase === 'div' && [2, 3, 5, 7].includes(n)) xMcmChoose(n);
+  };
+  renderX();
+  if (G.timer) startTimer(G);
+}
+
+function renderX(msg, kind) {
+  const G = App.game, q = G.qs[G.i], X = G.x, S = q.sol, op = mixOp(q), $ = id => document.getElementById(id);
+  const names = X.same ? ['Pasar a impropia', 'Operar numeradores', 'Simplificar', 'Resultado mixto'] : ['Simplificar', 'Calcular el mcm', 'Plantilla', op === '+' ? 'Sumar' : 'Restar', 'Resultado'];
+  const cur = X.same ? {conv: 0, op: 1, res: 2, mix: 3}[X.phase] : {simp: 0, mcm: 1, tmpl: 2, op: 3, res: 4, mix: 4}[X.phase];
+  $('asteps').innerHTML = names.map((n, i) => '<span class="stp ' + (i < cur ? 'ok' : i === cur ? 'on' : '') + '">' + (i < cur ? '✔ ' : '') + 'Paso ' + (i + 1) + ': ' + n + '</span>').join('');
+  const dens = X.fr.map(f => (f.chain.length ? lastOf(f.chain).d : f.d));
+  const redExpr = () => (X.same ? mixExpr(q, S.N.map(N => ({w: 0, n: N, d: S.mcm})), 'lg', false) : mixExpr(q, X.fr.map(f => ({w: 0, n: lastOf(f.chain).n, d: lastOf(f.chain).d})), 'lg', false));
+  const lab = X.same ? 'den.' : 'mcm';
+  let h = '', p = '';
+  const primePanel = label => '<p class="muted center" style="margin:6px 0 10px;max-width:none">' + label + '</p>' +
+    '<div class="pbtns">' + Config.SIMP.PRIMES.map(x => '<button class="pbtn' + (X.hintP === x ? ' hint' : '') + '" data-p="' + x + '">' + x + '</button>').join('') + '</div>' +
+    '<div class="row"><button class="btn ok sstop" id="astop">✋ Ya no se puede simplificar</button></div>';
+  const chk = '<div class="row"><button class="btn primary" id="achk">Comprobar ✔</button></div>';
+  if (X.phase === 'conv' || (X.phase === 'simp' && X.fr[X.fi].phase === 'conv')) {
+    X.fr.forEach((f, i) => {
+      if (f.w <= 0 || (X.same ? i > X.fi : i > X.fi)) return;
+      const fin = f.phase !== 'conv';
+      h += '<div class="chain" style="min-height:70px">' + fracMixed(f.w, f.n, f.d, 'lg') + '<span class="eq">=</span>' + (fin ? frac(f.w * f.d + f.n, f.d, 'lg')
+        : '<span class="frac lg"><span class="n"><input type="number" class="ain" id="acin" inputmode="numeric" aria-label="Nuevo numerador"></span><span class="d">' + f.d + '</span></span>') + '</div>';
+    });
+    p = '<p class="muted center" style="max-width:none"><b>Fracción ' + (X.fi + 1) + ' de ' + X.fr.length + '.</b> Multiplica el entero por el denominador y suma el numerador. El denominador se queda igual.</p>' + chk;
+  } else if (X.phase === 'simp') {
+    X.fr.forEach((f, i) => {
+      if (i > X.fi) return;
+      const pre = f.w > 0 ? fracMixed(f.w, f.n, f.d, 'lg') + '<span class="eq">=</span>' : '';
+      h += '<div class="chain" style="min-height:70px">' + pre + chainHTML(f.chain, f.phase === 'done') + '</div>';
+    });
+    p = primePanel('<b>Fracción ' + (X.fi + 1) + ' de ' + X.fr.length + '.</b> ¿Algún primo divide igual al numerador y al denominador? Si no, detecta que ya no se puede simplificar.');
+  } else if (X.phase === 'mcm') {
+    const M = X.m, last = M.rows[M.rows.length - 1];
+    h = '<div class="chain" style="min-height:60px">' + redExpr() + '</div><p class="prompt" style="font-size:20px;margin:4px 0">Calcula el mcm de <b>' + dens.join(', ') + '</b></p>' +
+        '<div class="mstage">' + mtableHTML(M.rows, M.divs, M.phase === 'fill' ? last.map(x => x > 1) : 0) + '</div>';
+    if (M.phase === 'div') p = '<p class="muted center" style="margin:0 0 10px;max-width:none"><b>Paso ' + (M.divs.length + 1) + '.</b> Elige el primo más pequeño que divide al menos a uno de los números.</p><div class="pbtns">' +
+        Config.MCM.PRIMES.map(x => '<button class="pbtn' + (M.hintP === x ? ' hint' : '') + '" data-p="' + x + '">' + x + '</button>').join('') + '</div>';
+    else if (M.phase === 'fill') p = '<p class="muted center" style="margin:0 0 10px;max-width:none">Dividiste entre <b>' + M.divs[M.divs.length - 1] + '</b>. Escribe la nueva fila: divide y <b>baja</b> los que no se pueden dividir.</p>' + chk;
+    else p = '<p class="muted center" style="margin:0 0 10px;max-width:none">¡Todos son 1! Multiplica los divisores.</p><div class="mformula">mcm = ' + M.divs.join(' × ') + ' = ' + aIn('aprod', 110) + '</div>' + chk;
+  } else if (X.phase === 'tmpl') {
+    h = '<div class="chain" style="min-height:90px">' + redExpr() + '<span class="eq">=</span>' + mixLong(X.fr.map((f, i) => aIn('tp' + i, 96)), X.mcm, op, 'mcm') + '</div>' +
+        '<div class="trow" style="font-size:20px;margin:2px 0 8px">Cada numerador: el mcm (<b>' + X.mcm + '</b>) <span class="op">÷</span> el denominador <span class="op">×</span> el numerador</div>';
+    p = chk;
+  } else if (X.phase === 'op') {
+    const nums = X.same ? S.N : S.prods;
+    h = '<div class="chain" style="min-height:90px">' + (X.same ? redExpr() + '<span class="eq">=</span>' : redExpr() + '<span class="eq">=</span>') + mixLong(nums.map(nbox), X.mcm, op, lab) + '<span class="eq">=</span>' +
+        '<span class="frac lg"><span class="n">' + aIn('asum', 120) + '</span><span class="d">' + X.mcm + '</span></span></div>';
+    p = '<p class="muted center" style="max-width:none">' + (q.op === '-' ? 'Resta' : 'Suma') + ' los numeradores (<b>' + nums.join(' ' + op + ' ') + '</b>); el denominador se queda igual.</p>' + chk;
+  } else if (X.phase === 'res') {
+    const nums = X.same ? S.N : S.prods;
+    h = '<div class="chain" style="min-height:90px">' + mixLong(nums.map(nbox), X.mcm, op, lab) + '<span class="eq">=</span>' + chainHTML(X.res.chain, false) + '</div>';
+    p = primePanel('<b>Resultado.</b> ¿Se puede simplificar? Busca primos que dividan al numerador y al denominador.');
+  } else if (X.phase === 'mix') {
+    const R = S.res;
+    h = '<div class="chain" style="min-height:90px">' + frac(R.n, R.d, 'lg') + '<span class="eq">=</span>' + aIn('amw', 76) + '<span class="frac lg"><span class="n">' + aIn('amn', 90) + '</span><span class="d">' + R.d + '</span></span></div>';
+    p = '<p class="muted center" style="max-width:none"><b>Resultado mixto.</b> Divide ' + R.n + ' ÷ ' + R.d + ': el cociente es el entero y lo que sobra es el numerador.</p>' + chk;
+  }
+  p += '<div class="row"><button class="btn sm" id="ahint">💡 Pista (-3 pts)</button></div>';
+  $('asec').innerHTML = h + p; setM(msg, kind);
+  document.querySelectorAll('#asec .pbtn').forEach(b => b.onclick = () => (X.phase === 'mcm' ? xMcmChoose(+b.dataset.p) : xPrime(+b.dataset.p)));
+  if ($('achk')) $('achk').onclick = xEnter;
+  if ($('astop')) $('astop').onclick = xStop;
+  if ($('ahint')) $('ahint').onclick = xHint;
+  document.querySelectorAll('#asec input').forEach(inp => inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); xEnter(); } }));
+  const f0 = document.querySelector('#asec input'); if (f0) f0.focus();
+}
+
+function xEnter() {
+  const G = App.game, X = G.x; if (G.locked) return;
+  if (X.phase === 'conv' || (X.phase === 'simp' && X.fr[X.fi].phase === 'conv')) xConv();
+  else if (X.phase === 'mcm') { if (X.m.phase === 'fill') xMcmRow(); else if (X.m.phase === 'prod') xMcmProd(); }
+  else if (X.phase === 'tmpl') xTmpl();
+  else if (X.phase === 'op') xOp();
+  else if (X.phase === 'mix') xMix();
+}
+
+function xConv() {
+  const G = App.game, q = G.qs[G.i], X = G.x, f = X.fr[X.fi], v = parseInt(document.getElementById('acin').value, 10), N = f.w * f.d + f.n;
+  if (v === N) {
+    Sound.ok(); const ok = '✔ ' + f.w + ' × ' + f.d + ' + ' + f.n + ' = ' + N + '.';
+    if (X.same) {
+      f.phase = 'done'; const nx = X.fr.findIndex((g, i) => i > X.fi && g.w > 0);
+      if (nx >= 0) { X.fi = nx; return renderX(ok, 'good'); }
+      X.phase = 'op'; return renderX(ok + ' Ahora opera los numeradores.', 'good');
+    }
+    f.phase = 'simp'; f.chain = [{n: N, d: f.d, p: 0}]; return renderX(ok + ' Ahora revisa si se puede simplificar.', 'good');
+  }
+  X.er++; Sound.bad(); const t = v === f.w * f.d ? 'noadd' : 'conv'; X.errs[t] = (X.errs[t] || 0) + 1;
+  setM(t === 'noadd' ? '❌ Ya multiplicaste ' + f.w + ' × ' + f.d + ' = ' + (f.w * f.d) + '. Falta sumar el numerador.' : '❌ Revisa: primero multiplica ' + f.w + ' × ' + f.d + ' y después suma ' + f.n + '.', 'bad');
+}
+
+function xPrime(p) {
+  const G = App.game, X = G.x; if (G.locked || (X.phase !== 'simp' && X.phase !== 'res')) return;
+  const t = mixTarget(X); if (t.phase === 'conv' || t.phase === 'done') return;
+  const cur = lastOf(t.chain), a = cur.n % p === 0, b = cur.d % p === 0;
+  if (!(a && b)) { X.er++; X.errs.sprime = (X.errs.sprime || 0) + 1; setM(''); return alertBadPrime(p, cur.n, cur.d); }
+  cur.p = p; t.chain.push({n: cur.n / p, d: cur.d / p, p: 0}); X.hintP = null; Sound.beep(700, 0.08);
+  renderX('✔ ' + cur.n + ' ÷ ' + p + ' = ' + (cur.n / p) + ' y ' + cur.d + ' ÷ ' + p + ' = ' + (cur.d / p) + '. ¿Se puede seguir?', 'good');
+}
+
+function xStop() {
+  const G = App.game, q = G.qs[G.i], X = G.x; if (G.locked || (X.phase !== 'simp' && X.phase !== 'res')) return;
+  const t = mixTarget(X); if (t.phase === 'conv' || t.phase === 'done') return;
+  const cur = lastOf(t.chain), g = MathUtil.gcd(cur.n, cur.d);
+  if (g > 1) { X.er++; X.errs.early = (X.errs.early || 0) + 1; setM(''); return alertEarly(cur.n, cur.d, X.errs.early >= 2 ? MathUtil.spf(g) : 0); }
+  t.phase = 'done'; X.hintP = null; Sound.ok();
+  if (X.phase === 'res') {
+    if (!q.sol.mixed) return finalizeMix(false);
+    X.phase = 'mix'; return renderX('✔ ' + cur.n + '/' + cur.d + ' ya no se simplifica y es impropia: escríbela como número mixto.', 'good');
+  }
+  const why = '✔ ' + cur.n + '/' + cur.d + ': ningún primo divide a la vez a ' + cur.n + ' y a ' + cur.d + '.';
+  if (++X.fi < X.fr.length) return renderX(why, 'good');
+  X.fi = 0; X.phase = 'mcm'; X.m = {rows: [X.fr.map(f => lastOf(f.chain).d)], divs: [], phase: 'div', rowErr: 0, hintP: null};
+  renderX('✔ Paso 1 completo. Ahora calcula el mcm de los denominadores.', 'good');
+}
+
+function xMcmChoose(p) {
+  const G = App.game, X = G.x, M = X.m; if (G.locked || X.phase !== 'mcm' || M.phase !== 'div') return;
+  const last = M.rows[M.rows.length - 1];
+  if (!last.some(x => x > 1 && x % p === 0)) { X.er++; X.errs.prime = (X.errs.prime || 0) + 1; Sound.bad(); return setM('❌ ' + p + ' no divide a ninguno de los números de la fila. Prueba con otro primo.', 'bad'); }
+  const small = MathUtil.smallestDivisor(last);
+  M.divs.push(p); M.phase = 'fill'; M.hintP = null; M.rowErr = 0;
+  renderX(p !== small ? 'Funciona, pero normalmente empezamos con el primo más pequeño (' + small + ').' : '', 'tip');
+}
+function xMcmRow() {
+  const G = App.game, X = G.x, M = X.m, last = M.rows[M.rows.length - 1], p = M.divs[M.divs.length - 1], exp = MathUtil.nextRow(last, p), wrong = [];
+  exp.forEach((v, i) => { if (v === null) return; const el = document.getElementById('mi' + i), s = el.value.trim(), ok = s !== '' && parseInt(s, 10) === v; el.classList.toggle('bad', !ok); el.classList.toggle('good', ok); if (!ok) wrong.push(i); });
+  if (!wrong.length) { M.rows.push(exp); M.phase = MathUtil.rowDone(exp) ? 'prod' : 'div'; M.rowErr = 0; Sound.ok(); return renderX('✔ ¡Bien!', 'good'); }
+  X.er++; M.rowErr++; Sound.bad();
+  const types = new Set(wrong.map(i => (last[i] % p === 0 ? 'div' : 'down'))); types.forEach(t => { X.errs[t] = (X.errs[t] || 0) + 1; });
+  let msg = types.has('down') ? '❌ Si un número no se puede dividir entre ' + p + ', se baja igual.' : '❌ Revisa la división en las casillas rojas.';
+  if (M.rowErr >= 2) msg += ' Ayuda: ' + last.filter(x => x > 1).map(x => (x % p === 0 ? x + ' ÷ ' + p + ' = ' + (x / p) : x + ' se baja')).join(' · ');
+  setM(msg, 'bad');
+}
+function xMcmProd() {
+  const X = App.game.x, M = X.m, prod = M.divs.reduce((a, b) => a * b, 1), v = parseInt(document.getElementById('aprod').value, 10);
+  if (v === prod) { X.mcm = prod; X.phase = 'tmpl'; Sound.ok(); return renderX('✔ mcm = ' + prod + '. Ahora la plantilla: ÷ el denominador y × el numerador.', 'good'); }
+  X.er++; X.errs.mult = (X.errs.mult || 0) + 1; Sound.bad(); setM('❌ Multiplica solo los divisores: ' + M.divs.join(' × ') + '. Hazlo de dos en dos.', 'bad');
+}
+function xTmpl() {
+  const G = App.game, X = G.x, q = G.qs[G.i]; let bad = 0; const kinds = new Set();
+  X.fr.forEach((f, i) => {
+    const fc = q.sol.facs[i], pr = q.sol.prods[i], el = document.getElementById('tp' + i), raw = el.value.trim(), v = parseInt(raw, 10), ok = raw !== '' && v === pr;
+    el.classList.toggle('bad', !ok); el.classList.toggle('good', ok);
+    if (!ok) { bad++; kinds.add(v === fc && fc !== pr ? 'mult2' : 'factor'); }
+  });
+  if (!bad) { X.phase = 'op'; Sound.ok(); return renderX('✔ ¡Numeradores correctos! Ahora ' + (q.op === '-' ? 'resta' : 'suma') + ' los numeradores.', 'good'); }
+  X.er++; Sound.bad(); kinds.forEach(k => { X.errs[k] = (X.errs[k] || 0) + 1; });
+  setM(kinds.has('factor') ? '❌ Revisa las casillas rojas: divide el mcm (' + X.mcm + ') entre el denominador y el resultado multiplícalo por el numerador.' : '❌ Ya dividiste el mcm entre el denominador; ahora multiplica por el numerador.', 'bad');
+}
+function xOp() {
+  const G = App.game, q = G.qs[G.i], X = G.x, S = q.sol, v = parseInt(document.getElementById('asum').value, 10), nums = X.same ? S.N : S.prods;
+  if (v === S.T) {
+    X.phase = 'res'; X.res = {phase: 'simp', chain: [{n: S.T, d: X.mcm, p: 0}]}; Sound.ok();
+    return renderX('✔ ' + nums.join(' ' + mixOp(q) + ' ') + ' = ' + S.T + '. Por último, ¿se puede simplificar?', 'good');
+  }
+  X.er++; Sound.bad();
+  const other = q.op === '-' ? nums[0] + nums[1] : Math.abs(nums[0] - nums[1]), t = v === other ? 'opsign' : (q.op === '-' ? 'sub' : 'sum');
+  X.errs[t] = (X.errs[t] || 0) + 1;
+  setM(t === 'opsign' ? '❌ Fíjate en el signo: aquí se ' + (q.op === '-' ? 'RESTA' : 'SUMA') + '.' : '❌ Revisa la ' + (q.op === '-' ? 'resta' : 'suma') + ' de los numeradores: ' + nums.join(' ' + mixOp(q) + ' ') + '.', 'bad');
+}
+function xMix() {
+  const G = App.game, q = G.qs[G.i], X = G.x, M = q.sol.mixed, w = parseInt(document.getElementById('amw').value, 10), n = parseInt(document.getElementById('amn').value, 10);
+  const okW = w === M.w, okN = n === M.n; document.getElementById('amw').classList.toggle('bad', !okW); document.getElementById('amw').classList.toggle('good', okW);
+  document.getElementById('amn').classList.toggle('bad', !okN); document.getElementById('amn').classList.toggle('good', okN);
+  if (okW && okN) { Sound.ok(); return finalizeMix(false); }
+  X.er++; Sound.bad(); if (!okW) X.errs.mixw = (X.errs.mixw || 0) + 1; if (!okN) X.errs.mixr = (X.errs.mixr || 0) + 1;
+  setM(!okW ? '❌ ¿Cuántas veces cabe ' + q.sol.res.d + ' en ' + q.sol.res.n + '? Ese es el entero.' : '❌ El numerador es lo que sobra al dividir ' + q.sol.res.n + ' ÷ ' + q.sol.res.d + '.', 'bad');
+}
+
+function xHint() {
+  const G = App.game, q = G.qs[G.i], X = G.x, S = q.sol; if (G.locked) return; X.hn++;
+  if (X.phase === 'conv' || (X.phase === 'simp' && X.fr[X.fi].phase === 'conv')) { const t = X.fr[X.fi]; return setM('💡 ' + t.w + ' × ' + t.d + ' = ' + (t.w * t.d) + '. Ahora suma el numerador ' + t.n + '.', 'tip'); }
+  if (X.phase === 'simp' || X.phase === 'res') {
+    const t = mixTarget(X), cur = lastOf(t.chain), g = MathUtil.gcd(cur.n, cur.d);
+    if (g > 1) { X.hintP = MathUtil.spf(g); return renderX('💡 Prueba con el ' + X.hintP + ': divide a ' + cur.n + ' y a ' + cur.d + '.', 'tip'); }
+    return setM('💡 Ningún primo divide a la vez a ' + cur.n + ' y a ' + cur.d + ': ya no se puede simplificar.', 'tip');
+  }
+  if (X.phase === 'mcm') {
+    const M = X.m, last = M.rows[M.rows.length - 1];
+    if (M.phase === 'div') { M.hintP = MathUtil.smallestDivisor(last); return renderX('💡 Prueba con el ' + M.hintP + ': divide al menos a uno de los números.', 'tip'); }
+    if (M.phase === 'fill') { const p = M.divs[M.divs.length - 1]; return setM('💡 ' + last.filter(x => x > 1).map(x => (x % p === 0 ? x + ' ÷ ' + p + ' = ' + (x / p) : x + ' no se divide: se baja')).join(' · '), 'tip'); }
+    return setM('💡 Multiplica de dos en dos: ' + M.divs[0] + ' × ' + M.divs[1] + ' = ' + (M.divs[0] * M.divs[1]) + (M.divs.length > 2 ? ', y ese resultado × ' + M.divs[2] + '…' : ''), 'tip');
+  }
+  if (X.phase === 'tmpl') { const i = X.fr.findIndex((f, k) => parseInt(document.getElementById('tp' + k).value, 10) !== S.prods[k]), k = i < 0 ? 0 : i;
+    return setM('💡 Fracción ' + (k + 1) + ': ' + X.mcm + ' ÷ ' + S.dens[k] + ' = ' + S.facs[k] + '. Ahora ' + S.facs[k] + ' × ' + S.red[k].n + '.', 'tip'); }
+  if (X.phase === 'op') return setM('💡 ' + (X.same ? S.N : S.prods).join(' ' + mixOp(q) + ' ') + '. Solo se ' + (q.op === '-' ? 'restan' : 'suman') + ' los numeradores.', 'tip');
+  setM('💡 ' + S.res.n + ' ÷ ' + S.res.d + ' = ' + S.mixed.w + ' y sobran ' + S.mixed.n + '.', 'tip');
+}
+
+function mixSolHTML(q) {
+  const S = q.sol, R = S.res, op = mixOp(q), line = t => '<p class="aline" style="margin:6px 0;font-size:20px">' + t + '</p>';
+  const end = line('<b>Simplificar</b> · ' + chainHTML(MathUtil.simpSteps(S.T, S.mcm).chain, true)) + (S.mixed ? line('<b>Resultado mixto</b> · ' + frac(R.n, R.d, 'lg') + ' = ' + fracMixed(S.mixed.w, S.mixed.n, S.mixed.d, 'lg')) : '');
+  if (S.same) return (q.whole ? line('<b>Paso 1</b> · a impropias: ' + q.fr.map((f, i) => (f.w ? f.w + '×' + f.d + '+' + f.n + '=' : '') + S.N[i]).join(' · ')) : '') +
+    line('<b>Operar</b> · ' + S.N.join(' ' + op + ' ') + ' = ' + S.T + ' → ' + frac(S.T, S.mcm, 'lg')) + end;
+  return line('<b>Paso 1</b> · ' + mixExpr(q, S.red.map(r => ({w: 0, n: r.n, d: r.d})), 'lg', false)) +
+    line('<b>Paso 2</b> · mcm de ' + S.dens.join(', ') + ' = <b>' + S.mcm + '</b>') +
+    line('<b>Paso 3</b> · ' + S.red.map((r, i) => S.mcm + '÷' + r.d + '×' + r.n + '=' + S.prods[i]).join(' · ')) +
+    line('<b>Paso 4</b> · ' + S.prods.join(' ' + op + ' ') + ' = ' + S.T) + end;
+}
+
+function finalizeMix(timedOut) {
+  const G = App.game, q = G.qs[G.i], X = G.x, $ = id => document.getElementById(id); if (G.locked) return;
+  const ms = Math.round(performance.now() - G.t0);
+  const leftFrac = G.timer ? Math.max(0, (G.deadline - performance.now()) / (G.limit * 1000)) : 0;
+  stopTimer(); G.locked = true; Music.setTension(0);
+  const ok = !timedOut && X.er <= 2 && X.hn <= 2;
+  let pts = 0;
+  if (ok) {
+    G.correct++; G.streak++; G.bestStreak = Math.max(G.bestStreak, G.streak);
+    pts = Math.max(8, 20 + (G.timer ? Math.round(15 * leftFrac) : 0) - 3 * X.hn - 2 * X.er) + (G.streak >= 5 ? 10 : G.streak >= 3 ? 5 : 0);
+  } else { G.streak = 0; pts = timedOut ? 0 : 3; }
+  if (timedOut) G.timeouts++;
+  G.points += pts;
+  const mainErr = timedOut ? 'timeout' : Object.keys(X.errs).sort((a, b) => X.errs[b] - X.errs[a])[0] || '';
+  const S = q.sol, resStr = (S.mixed ? S.mixed.w + ' ' + S.mixed.n + '/' + S.mixed.d : S.res.n + '/' + S.res.d);
+  const u = App.demo ? App.user : App.store.student(App.user.key);
+  if (!App.demo) App.store.upsertStudent({key: u.key, points: (u.points || 0) + pts, bestStreak: Math.max(u.bestStreak || 0, G.bestStreak), lastSeen: Date.now()});
+  if (!App.demo) App.store.addRecord({sk: u.key, g: u.group, st: u.id, ts: Date.now(), rd: G.rid, skill: 'mixops', lvl: q.level, ex: q.key, mcm: S.mcm, n: null, d: null, shape: '',
+                       res: resStr, ok, ms, err: mainErr, errs: X.errs, er: X.er, hn: X.hn, to: !!timedOut, lim: G.timer ? G.limit : 0});
+  ok ? Sound.ok() : Sound.bad();
+  if (ok) popup('+' + pts);
+  $('asteps').innerHTML = ''; $('asec').innerHTML = mixSolHTML(q); setM('');
+  $('pts').textContent = '⭐ ' + G.points; $('stk').textContent = '🔥 ' + G.streak;
+  const fb = $('fb'); fb.className = 'fb ' + (ok ? 'good' : 'bad');
+  fb.innerHTML = (ok ? '¡Excelente! ' : timedOut ? '⏰ ¡Se acabó el tiempo! Así se resolvía. ' : 'Terminaste, pero con varios errores. ') + 'Resultado: ' + (S.mixed ? fracMixed(S.mixed.w, S.mixed.n, S.mixed.d) : frac(S.res.n, S.res.d)) +
+    '<div class="row"><button class="btn primary" id="next">' + (G.i + 1 >= G.qs.length ? 'Ver resultado' : 'Siguiente') + ' ➜</button></div>';
+  const next = () => { G.i++; G.i >= G.qs.length ? viewSummary() : viewQuestion(); };
+  $('next').onclick = next; $('next').focus();
+  App.keys = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); next(); } };
+}
+
 /* ---------- Modo clase: suma con distinto denominador ---------- */
 function viewClassAdd() {
   App.keys = null;
@@ -2511,7 +2850,7 @@ function viewTeacher() {
       const badges = recs.length < Config.ALERTS.minAttempts ? '<span class="muted small">Pocos datos</span>'
         : (al.length ? al.map(a => '<span class="badge ' + a.level + '" title="' + esc(a.text) + '">' + esc(a.text) + '</span>').join('') : '<span class="badge ok">Sin alertas</span>');
       return '<tr class="st" data-k="' + esc(s.key) + '"><td>' + esc(s.group) + '</td><td>' + s.id + '</td><td>' + (s.name ? esc(s.name) : '<span class="muted">—</span>') + '</td><td>' + recs.length + '</td><td>' + tot + '</td>' +
-        '<td>' + (sk.identify ? pct(sk.identify.acc) : '—') + '</td><td>' + (sk.color ? pct(sk.color.acc) : '—') + '</td><td>' + (sk.mcm ? pct(sk.mcm.acc) : '—') + '</td><td>' + (sk.simplify ? pct(sk.simplify.acc) : '—') + '</td><td>' + (sk.addsub_unlike ? pct(sk.addsub_unlike.acc) : '—') + '</td><td>' + (recs.length ? secs(S.avgMs) : '—') + '</td><td>' + (s.points || 0) + '</td><td>' + fmtDate(s.lastSeen) + '</td><td>' + badges + '</td></tr>';
+        '<td>' + (sk.identify ? pct(sk.identify.acc) : '—') + '</td><td>' + (sk.color ? pct(sk.color.acc) : '—') + '</td><td>' + (sk.mcm ? pct(sk.mcm.acc) : '—') + '</td><td>' + (sk.simplify ? pct(sk.simplify.acc) : '—') + '</td><td>' + (sk.addsub_unlike ? pct(sk.addsub_unlike.acc) : '—') + '</td><td>' + (sk.mixops ? pct(sk.mixops.acc) : '—') + '</td><td>' + (recs.length ? secs(S.avgMs) : '—') + '</td><td>' + (s.points || 0) + '</td><td>' + fmtDate(s.lastSeen) + '</td><td>' + badges + '</td></tr>';
     }).join('');
   const planned = Object.keys(Config.SKILLS).filter(k => !Config.SKILLS[k].active).map(k => Config.SKILLS[k].icon + ' ' + Config.SKILLS[k].name).join(' · ');
   const rg = sel || Prefs.get('lastGroup', '') || groups[0] || '', nS = App.store.students().length, nR = App.store.records().length;
@@ -2530,8 +2869,8 @@ function viewTeacher() {
     '<button class="btn" id="ej">Exportar JSON</button><button class="btn" id="ec">Exportar CSV</button>' +
     '<button class="btn" id="imp">Importar JSON</button><input type="file" id="file" accept=".json" class="hidden">' +
     '<button class="btn" id="clr" style="color:var(--bad)">Borrar todo</button></div>' +
-    '<div class="scroll"><table><thead><tr><th>Grupo</th><th>Lista</th><th>Nombre</th><th>Intentos</th><th>Aciertos</th><th>Identifica</th><th>Colorea</th><th>MCM</th><th>Simplifica</th><th>Suma</th><th>Tiempo prom.</th><th>Puntos</th><th>Última vez</th><th>Alertas tempranas</th></tr></thead><tbody>' +
-    (rows || '<tr><td colspan="14" class="muted">Aún no hay alumnos registrados.</td></tr>') + '</tbody></table></div>' +
+    '<div class="scroll"><table><thead><tr><th>Grupo</th><th>Lista</th><th>Nombre</th><th>Intentos</th><th>Aciertos</th><th>Identifica</th><th>Colorea</th><th>MCM</th><th>Simplifica</th><th>Suma</th><th>Mixtas</th><th>Tiempo prom.</th><th>Puntos</th><th>Última vez</th><th>Alertas tempranas</th></tr></thead><tbody>' +
+    (rows || '<tr><td colspan="15" class="muted">Aún no hay alumnos registrados.</td></tr>') + '</tbody></table></div>' +
     '<p class="muted small">Toca un alumno para ver el detalle por denominador, figura, nivel y tipos de error frecuentes. ' + (Cloud.on ? 'Los resultados de todos los dispositivos se reúnen solos en la nube; usa «Actualizar» para traer lo más reciente.' : 'Para reunir datos de varias computadoras: exporta JSON en cada una e impórtalos aquí.') + '</p></div>' +
     '<div id="detail"></div>' +
     '<div class="card"><h3>📤 Reporte para gestión escolar</h3>' +
@@ -2637,6 +2976,10 @@ function showDetail(key) {
   const addBlock = ar.length ? '<div style="margin-top:12px"><b>Reto Suma</b><p class="muted small">Ejercicios: ' + ar.length + ' · errores por ejercicio: ' + (ar.reduce((t, r) => t + (r.er || 0), 0) / ar.length).toFixed(1) +
     ' · pistas: ' + ar.reduce((t, r) => t + (r.hn || 0), 0) + '</p><div>' +
     ar.slice(-8).map(r => '<span class="badge ' + (r.ok ? 'ok' : r.to ? 'med' : 'high') + '">' + esc(r.ex) + ' = ' + r.res + (r.er ? ' (' + r.er + ' err.)' : '') + '</span>').join('') + '</div></div>' : '';
+  const xr = recs.filter(r => r.skill === 'mixops');
+  const mixBlock = xr.length ? '<div style="margin-top:12px"><b>Reto Operaciones con mixtas</b><p class="muted small">Ejercicios: ' + xr.length + ' · errores por ejercicio: ' + (xr.reduce((t, r) => t + (r.er || 0), 0) / xr.length).toFixed(1) +
+    ' · pistas: ' + xr.reduce((t, r) => t + (r.hn || 0), 0) + '</p><div>' +
+    xr.slice(-8).map(r => '<span class="badge ' + (r.ok ? 'ok' : r.to ? 'med' : 'high') + '">' + esc(r.ex) + ' = ' + esc(r.res) + (r.er ? ' (' + r.er + ' err.)' : '') + '</span>').join('') + '</div></div>' : '';
   const mr = recs.filter(r => r.skill === 'mcm');
   const mcmBlock = mr.length ? '<div style="margin-top:12px"><b>Reto MCM</b><p class="muted small">Colecciones: ' + mr.length + ' · errores por colección: ' + (mr.reduce((t, r) => t + (r.er || 0), 0) / mr.length).toFixed(1) +
     ' · pistas: ' + mr.reduce((t, r) => t + (r.hn || 0), 0) + '</p><div>' +
@@ -2647,7 +2990,7 @@ function showDetail(key) {
     '<div class="grid2"><div><b>Aciertos por denominador</b><table><thead><tr><th>Denominador</th><th>Intentos</th><th>Aciertos</th></tr></thead><tbody>' + (dRows || '<tr><td colspan="3" class="muted">Sin datos</td></tr>') + '</tbody></table></div>' +
     '<div><b>Errores frecuentes</b><ul>' + (eRows || '<li class="muted">Sin errores registrados</li>') + '</ul></div></div>' +
     '<div class="grid2" style="margin-top:12px"><div><b>Por figura</b>' + Object.keys(sh).map(k => meter(shapeName(k), sh[k])).join('') + '</div>' +
-    '<div><b>Por nivel</b>' + Object.keys(lv).sort().map(k => meter('Nivel ' + k, lv[k])).join('') + '</div></div>' + mcmBlock + simpBlock + addBlock +
+    '<div><b>Por nivel</b>' + Object.keys(lv).sort().map(k => meter('Nivel ' + k, lv[k])).join('') + '</div></div>' + mcmBlock + simpBlock + addBlock + mixBlock +
     '<div class="row left" style="margin-top:12px">' + (Cloud.on ? '<span class="muted small" style="align-self:center">NIP: ' + (s.hasPin ? 'creado' : 'sin crear') + (s.lockedUntil > Date.now() ? ' · 🔒 bloqueado' : '') + '</span>' + (s.dbId && s.hasPin ? '<button class="btn" id="rstpin">🔑 Reiniciar NIP</button>' : '') : '') + '<button class="btn" id="rmst" style="color:var(--bad)">Quitar alumno y sus resultados</button></div></div>';
   document.getElementById('rmst').onclick = () => askConfirm('¿Quitar a ' + (s.name || 'lista ' + s.id) + ' y borrar sus ' + recs.length + ' resultados?', async () => {
     if (Cloud.on && s.dbId) { const r = await Cloud.tReq('DELETE', '/rest/v1/students?id=eq.' + s.dbId).catch(e => ({ok: false})); if (!r.ok) return notice('No se pudo borrar en la nube.'); }
